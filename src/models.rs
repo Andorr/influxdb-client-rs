@@ -20,6 +20,17 @@ impl From<f64> for Value {
     }
 }
 
+impl Value {
+    fn to_string(self) -> String {
+        match self {
+            Value::Str(s) => s.to_string(),
+            Value::Int(i) => i.to_string(),
+            Value::Float(f) => f.to_string(),
+            Value::Bool(b) => b.to_string(), 
+        }
+    }
+}
+
 pub struct Point {
 
     pub measurement: String,
@@ -65,7 +76,7 @@ impl Point {
             write!(&mut builder, ",").unwrap();
             
             for tag in self.tags {
-                write!(&mut builder, "{:?}={:?}", tag.0, tag.1).unwrap();
+                write!(&mut builder, "{:?}={:?}", tag.0.to_string(), tag.1.to_string()).unwrap();
             }
         }
         
@@ -74,7 +85,7 @@ impl Point {
             write!(&mut builder, " ").unwrap();
 
             for field in self.fields {
-                write!(&mut builder, "{:?}={:?}", field.0, field.1).unwrap();
+                write!(&mut builder, "{:?}={:?}", field.0.to_string(), field.1.to_string()).unwrap();
             }
         }
 
