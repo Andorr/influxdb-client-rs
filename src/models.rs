@@ -76,7 +76,7 @@ impl Point {
             write!(&mut builder, ",").unwrap();
             
             for tag in self.tags {
-                write!(&mut builder, "{:?}={:?}", tag.0.to_string(), tag.1.to_string()).unwrap();
+                write!(&mut builder, "{}={}", tag.0.to_string(), tag.1.to_string()).unwrap();
             }
         }
         
@@ -85,7 +85,7 @@ impl Point {
             write!(&mut builder, " ").unwrap();
 
             for field in self.fields {
-                write!(&mut builder, "{:?}={:?}", field.0.to_string(), field.1.to_string()).unwrap();
+                write!(&mut builder, "{}={}", field.0.to_string(), field.1.to_string()).unwrap();
             }
         }
 
@@ -95,5 +95,39 @@ impl Point {
         }
 
         builder
+    }
+}
+
+impl Iterator for Point {
+    type Item = Point;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        None
+    }
+}
+
+#[derive(Debug)]
+pub enum InfluxError {
+    InvalidSyntax(String),
+    InvalidCredentials(String),
+    Forbidden(String),
+    Unknown(String),
+}
+
+mod tests {
+    use super::{Point};
+
+    #[test]
+    fn test_point_serialize() {
+        let expected = "mem,host=host1 used_percent=23.43234543 1556896326";
+
+        let point  = Point::new("mem")
+            .tag("host", "host1")
+            .field("used_percent", 23.43234543)
+            .timestamp(1556896326);
+
+        let actual = point.serialize();
+
+        assert_eq!(actual, expected);
     }
 }
