@@ -1,10 +1,11 @@
-use std::{error::Error, string::ParseError};
 use reqwest::{Client as HttpClient, Method, Url};
+use std::{error::Error, string::ParseError};
 
 use crate::models::InfluxError;
 
-use super::models::{Point};
+use super::models::Point;
 
+/// Client for InfluxDB
 pub struct Client {
     host: Url,
     token: String,
@@ -15,7 +16,6 @@ pub struct Client {
 }
 
 impl Client {
-
     pub fn new<T>(host: T, token: T) -> Client
     where
         T: Into<String>,
@@ -48,31 +48,25 @@ impl Client {
     }
 
     pub async fn insert_points(self, points: &Vec<Point>) -> Result<(), InfluxError> {
-
-        let body = points.iter().map(|p| 
-            format!("{}", p.clone().serialize())
-        )
+        let body = points
+            .iter()
+            .map(|p| format!("{}", p.clone().serialize()))
             .collect::<Vec<String>>()
             .join("\n");
-        
-        let result = self.new_request(Method::POST, "/api/v2/write")
+
+        let result = self
+            .new_request(Method::POST, "/api/v2/write")
             .body(body)
             .send()
             .await
             .unwrap()
             .error_for_status();
 
-        
-
-        // let text = result.text().await.unwrap();
-        // let r = result.error_for_status();
-
         if let Err(err) = result {
             let status = err.status().unwrap().as_u16();
             return Err(Client::status_to_influxerror(status, Box::new(err)));
         }
-            
-        
+
         Ok(())
     }
 
@@ -82,19 +76,19 @@ impl Client {
         if let Some(bucket) = self.bucket {
             query_params.push(("bucket", bucket));
         }
-        
+
         if let Some(org) = self.org {
             query_params.push(("org", org));
-        }
-        else if let Some(org_id) = self.org_id {
+        } else if let Some(org_id) = self.org_id {
             query_params.push(("orgID", org_id));
         }
 
         // Build default request
         let mut url = self.host.clone();
         url.set_path(path);
-        
-        self.client.request(method, url)
+
+        self.client
+            .request(method, url)
             .header("Content-Type", "text/plain")
             .header("Authorization", format!("{} {}", "Token", self.token))
             .query(&query_params)
@@ -105,8 +99,7 @@ impl Client {
             400 => InfluxError::InvalidSyntax(err.to_string()),
             401 => InfluxError::InvalidCredentials(err.to_string()),
             403 => InfluxError::Forbidden(err.to_string()),
-            _ => InfluxError::Unknown(err.to_string()),   
+            _ => InfluxError::Unknown(err.to_string()),
         }
     }
 }
-
