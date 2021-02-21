@@ -1,8 +1,7 @@
 # 🦀 InfluxDB Rust Client
 
 [![tests](https://github.com/Andorr/influxdb-client-rs/actions/workflows/test.yml/badge.svg)](https://github.com/Andorr/influxdb-client-rs/actions/workflows/test.yml)
-
-![docs](https://img.shields.io/endpoint?color=orange&label=docs&url=https%3A%2F%2Fandorr.github.io%2Finfluxdb-client-rs%2Finfluxdb_client_rs%2Findex.htmlhttps%3A%2F%2Fandorr.github.io%2Finfluxdb-client-rs%2Finfluxdb_client_rs%2Findex.html)
+[![docs](https://img.shields.io/badge/docs-0.1.0-orange)](https://andorr.github.io/influxdb-client-rs/influxdb_client_rs/index.html)
 
 * https://docs.influxdata.com/influxdb/v2.0/api/#operation/PostWrite
 
