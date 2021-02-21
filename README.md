@@ -7,7 +7,7 @@
 use influxdb_client::{Client, Precision, Point, points};
 
 
-let mut client = Client::new("http://localhost:8080", "...")
+let mut client = Client::new("http://localhost:8086", "...")
     .with_bucket("tradely")
     .with_precision(Precision::ms);
 
