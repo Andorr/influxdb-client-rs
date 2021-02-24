@@ -1,9 +1,7 @@
-use std::{error::Error, string::ParseError};
 use reqwest::{Client as HttpClient, Method, Url};
+use std::{error::Error};
 
-use crate::models::InfluxError;
-
-use super::models::{Point};
+use crate::models::{InfluxError, Point};
 
 pub struct Client {
     host: Url,
@@ -15,7 +13,6 @@ pub struct Client {
 }
 
 impl Client {
-
     pub fn new<T>(host: &str, token: T) -> Client
     where
         T: Into<String>,
@@ -47,20 +44,22 @@ impl Client {
         self
     }
 
-    pub async fn insert_points<T: Iterator<Item = Point>>(self, points: T) -> Result<(), InfluxError> {
-
-        let body = points.map(|p| format!("{}\n", p.serialize()))
+    pub async fn insert_points<T: Iterator<Item = Point>>(
+        self,
+        points: T,
+    ) -> Result<(), InfluxError> {
+        let body = points
+            .map(|p| format!("{}\n", p.serialize()))
             .collect::<Vec<String>>()
             .join("\n");
-        
-        let result = self.new_request(Method::POST, "/api/v2/write")
+
+        let result = self
+            .new_request(Method::POST, "/api/v2/write")
             .body(body)
             .send()
             .await
             .unwrap()
             .error_for_status();
-
-        
 
         println!("Sending request!");
         // let text = result.text().await.unwrap();
@@ -73,7 +72,6 @@ impl Client {
         } else {
             Ok(())
         }
-    
     }
 
     fn new_request(self, method: Method, path: &str) -> reqwest::RequestBuilder {
@@ -82,19 +80,18 @@ impl Client {
         if let Some(bucket) = self.bucket {
             query_params.push(("bucket", bucket));
         }
-        
         if let Some(org) = self.org {
             query_params.push(("org", org));
-        }
-        else if let Some(org_id) = self.org_id {
+        } else if let Some(org_id) = self.org_id {
             query_params.push(("orgID", org_id));
         }
 
         // Build default request
         let mut url = self.host.clone();
         url.set_path(path);
-        
-        self.client.request(method, url)
+
+        self.client
+            .request(method, url)
             .header("Content-Type", "text/plain")
             .header("Authorization", format!("{} {}", "Token", self.token))
             .query(&query_params)
@@ -105,8 +102,7 @@ impl Client {
             400 => InfluxError::InvalidSyntax(err.to_string()),
             401 => InfluxError::InvalidCredentials(err.to_string()),
             403 => InfluxError::Forbidden(err.to_string()),
-            _ => InfluxError::Unknown(err.to_string()),   
+            _ => InfluxError::Unknown(err.to_string()),
         }
     }
 }
-
