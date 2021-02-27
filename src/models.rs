@@ -78,7 +78,7 @@ impl Point {
                 write!(&mut builder, "{}={}", tag.0.to_string(), tag.1.to_string()).unwrap();
             }
         }
-
+      
         // Write fields
         if !self.fields.is_empty() {
             write!(&mut builder, " ").unwrap();

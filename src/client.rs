@@ -1,4 +1,5 @@
 use reqwest::{Client as HttpClient, Method, Url};
+
 use std::{error::Error, string::ParseError};
 
 use crate::models::InfluxError;
@@ -16,6 +17,7 @@ pub struct Client {
 }
 
 impl Client {
+
     pub fn new<T>(host: T, token: T) -> Client
     where
         T: Into<String>,
@@ -47,6 +49,7 @@ impl Client {
         self
     }
 
+
     pub async fn insert_points(self, points: &Vec<Point>) -> Result<(), InfluxError> {
         let body = points
             .iter()
@@ -61,6 +64,7 @@ impl Client {
             .await
             .unwrap()
             .error_for_status();
+
 
         if let Err(err) = result {
             let status = err.status().unwrap().as_u16();
