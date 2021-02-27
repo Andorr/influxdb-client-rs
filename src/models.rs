@@ -1,8 +1,6 @@
-use crate::traits::HelloMacro;
-use derives::HelloMacro;
 use std::fmt::Write;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
     Int(i64),
@@ -33,7 +31,7 @@ impl Value {
     }
 }
 
-#[derive(HelloMacro)]
+#[derive(Debug, Clone)]
 pub struct Point {
     pub measurement: String,
     pub timestamp: Option<i64>,
@@ -75,10 +73,12 @@ impl Point {
         // Write tags
         if !self.tags.is_empty() {
             write!(&mut builder, ",").unwrap();
+
             for tag in self.tags {
                 write!(&mut builder, "{}={}", tag.0.to_string(), tag.1.to_string()).unwrap();
             }
         }
+      
         // Write fields
         if !self.fields.is_empty() {
             write!(&mut builder, " ").unwrap();

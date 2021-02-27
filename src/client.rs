@@ -1,8 +1,12 @@
 use reqwest::{Client as HttpClient, Method, Url};
-use std::{error::Error};
 
-use crate::models::{InfluxError, Point};
+use std::{error::Error, string::ParseError};
 
+use crate::models::InfluxError;
+
+use super::models::Point;
+
+/// Client for InfluxDB
 pub struct Client {
     host: Url,
     token: String,
@@ -13,11 +17,12 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new<T>(host: &str, token: T) -> Client
+
+    pub fn new<T>(host: T, token: T) -> Client
     where
         T: Into<String>,
     {
-        let host_url = reqwest::Url::parse(host).unwrap();
+        let host_url = reqwest::Url::parse(&host.into()[..]).unwrap();
 
         Client {
             host: host_url,
@@ -44,12 +49,11 @@ impl Client {
         self
     }
 
-    pub async fn insert_points<T: Iterator<Item = Point>>(
-        self,
-        points: T,
-    ) -> Result<(), InfluxError> {
+
+    pub async fn insert_points(self, points: &Vec<Point>) -> Result<(), InfluxError> {
         let body = points
-            .map(|p| format!("{}\n", p.serialize()))
+            .iter()
+            .map(|p| format!("{}", p.clone().serialize()))
             .collect::<Vec<String>>()
             .join("\n");
 
@@ -61,17 +65,13 @@ impl Client {
             .unwrap()
             .error_for_status();
 
-        println!("Sending request!");
-        // let text = result.text().await.unwrap();
-        // let r = result.error_for_status();
 
         if let Err(err) = result {
             let status = err.status().unwrap().as_u16();
-            println!("Status: {:?}", status);
-            Err(Client::status_to_influxerror(status, Box::new(err)))
-        } else {
-            Ok(())
+            return Err(Client::status_to_influxerror(status, Box::new(err)));
         }
+
+        Ok(())
     }
 
     fn new_request(self, method: Method, path: &str) -> reqwest::RequestBuilder {
@@ -80,6 +80,7 @@ impl Client {
         if let Some(bucket) = self.bucket {
             query_params.push(("bucket", bucket));
         }
+
         if let Some(org) = self.org {
             query_params.push(("org", org));
         } else if let Some(org_id) = self.org_id {

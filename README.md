@@ -1,5 +1,8 @@
 # 🦀 InfluxDB Rust Client
 
+[![tests](https://github.com/Andorr/influxdb-client-rs/actions/workflows/test.yml/badge.svg)](https://github.com/Andorr/influxdb-client-rs/actions/workflows/test.yml)
+[![docs](https://img.shields.io/badge/docs-0.1.0-orange)](https://andorr.github.io/influxdb-client-rs/influxdb_client_rs/index.html)
+
 * https://docs.influxdata.com/influxdb/v2.0/api/#operation/PostWrite
 
 
@@ -7,7 +10,7 @@
 use influxdb_client::{Client, Precision, Point, points};
 
 
-let mut client = Client::new("http://localhost:8080", "...")
+let mut client = Client::new("http://localhost:8086", "...")
     .with_bucket("tradely")
     .with_precision(Precision::ms);
 
