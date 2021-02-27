@@ -1,6 +1,6 @@
 [package]
 name = "derives"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Sveinung Øverland <sveinungg.overlandd@gmail.com>"]
 edition = "2018"
 

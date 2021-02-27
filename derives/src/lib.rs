@@ -102,7 +102,7 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
 
     let complete_text = format!("{{}},{} {}", tag_names_combined, field_names_combined);
 
-    let _timestamp = &ast_fields
+    let struct_timestamp = ast_fields
         .iter()
         .find(|field| field.contains_tag(&namespace, &timestamp_path))
         .expect("Missing timestamp field!")
@@ -117,7 +117,10 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
                 return format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string();
             }
             fn serialize_with_timestamp(&self, timestamp: Option<String>) -> String {
-                self.serialize()
+                match timestamp {
+                    Some(timestamp) => format!("{} {}", self.serialize(), timestamp),
+                    None => format!("{} {}", self.serialize(), self.#struct_timestamp.to_string())
+                }
             }
         }
     })

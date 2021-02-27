@@ -21,7 +21,7 @@ mod tests {
             ticker2: String,
             #[point(field = "notPrice")]
             price: f32,
-            #[point(field = "notPrice2")]
+            #[point(field)]
             price2: String,
             #[point(timestamp)]
             data: String,
@@ -36,8 +36,7 @@ mod tests {
         .serialize();
         println!("Wow, very serialized: {}", result);
         assert_eq!(
-            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,notPrice2=\"Hello world\""
-                .to_string(),
+            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\"".to_string(),
             result
         );
     }
