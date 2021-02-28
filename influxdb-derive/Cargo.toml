@@ -1,0 +1,18 @@
+[package]
+name = "influxdb-derives"
+version = "0.1.0"
+description = "InfluxDBv2 Rust client - struct serialization for line protocol"
+authors = ["Anders Hallem Iversen <andershallemiversen@hotmail.com>", "Sveinung Øverland"]
+license = "MIT"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.24"
+proc_macro_roids = "0.7.0"
+quote = "1.0.9"
+syn = { version = "1.0.60", features = ["extra-traits", "derive", "printing"] }

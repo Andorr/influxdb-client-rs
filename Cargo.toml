@@ -1,24 +1,5 @@
-[package]
-name = "influxdb-client"
-version = "0.1.0"
-authors = ["Anders Hallem Iversen <andershallemiversen@hotmail.com>", "Sveinung Øverland"]
-edition = "2018"
-license-file = "LICENSE"
-description = "Rust client library for InfluxDB v2"
-documentation = "https://andorr.github.io/influxdb-client-rs/influxdb_client_rs/index.html"
-repository = "https://github.com/Andorr/influxdb-client-rs"
-readme = "README.md"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
-[dependencies]
-reqwest = { version = "0.11.1", default-features = false }
-influxdb_derive = { version = "^0.1.2", path = "./influxdb_derive" }
-
-
-[dev-dependencies]
-chrono = "0.4.19"
-mockito = "0.29.0"
-rand = "0.8.3"
-tokio-test = "0.4.0"
+[workspace]
+members = [
+    "influxdb-client",
+    "influxdb-derive",
+]
