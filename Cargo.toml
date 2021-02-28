@@ -11,9 +11,11 @@ readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
 [dependencies]
 reqwest = { version = "0.11.1", default-features = false }
-derives = { version = "0.1.2", path = "./derives" }
+influxdb_derive = { version = "0.1.2", path = "./influxdb_derive" }
+
 
 [dev-dependencies]
 chrono = "0.4.19"
