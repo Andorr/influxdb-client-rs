@@ -5,7 +5,7 @@ pub mod traits;
 #[cfg(test)]
 mod tests {
 
-    use super::client::Client;
+    use super::client::{Client, InsertOptions};
     use super::models::Point;
     use mockito::Matcher;
 
@@ -28,6 +28,7 @@ mod tests {
             #[point(timestamp)]
             data: String,
         }
+
         let result = Test {
             ticker: "GME".to_string(),
             ticker2: "!GME".to_string(),
@@ -67,8 +68,9 @@ mod tests {
             .field("price", 420.69)
             .timestamp(1613925577);
 
-        let points = vec![point];
-        let result = tokio_test::block_on(client.insert_points(&points));
+        let points: Vec<Point> = vec![point];
+        let result =
+            tokio_test::block_on(client.insert_points(points, InsertOptions::WithTimestamp(None)));
 
         assert!(result.is_ok());
 

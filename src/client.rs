@@ -1,10 +1,14 @@
 use reqwest::{Client as HttpClient, Method, Url};
 
-use std::{error::Error, string::ParseError};
+use std::error::Error;
 
-use crate::models::InfluxError;
+use crate::{models::InfluxError, traits::PointSerialize};
 
-use super::models::Point;
+#[derive(Clone)]
+pub enum InsertOptions {
+    None,
+    WithTimestamp(Option<String>),
+}
 
 /// Client for InfluxDB
 pub struct Client {
@@ -17,7 +21,6 @@ pub struct Client {
 }
 
 impl Client {
-
     pub fn new<T>(host: T, token: T) -> Client
     where
         T: Into<String>,
@@ -49,13 +52,25 @@ impl Client {
         self
     }
 
-
-    pub async fn insert_points(self, points: &Vec<Point>) -> Result<(), InfluxError> {
+    pub async fn insert_points(
+        self,
+        points: impl IntoIterator<Item = impl PointSerialize>,
+        options: InsertOptions,
+    ) -> Result<(), InfluxError> {
         let body = points
-            .iter()
-            .map(|p| format!("{}", p.clone().serialize()))
+            .into_iter()
+            .map(|p| {
+                format!(
+                    "{}",
+                    match options.clone() {
+                        InsertOptions::WithTimestamp(t) => p.serialize_with_timestamp(t),
+                        InsertOptions::None => p.serialize(),
+                    }
+                )
+            })
             .collect::<Vec<String>>()
             .join("\n");
+
 
         let result = self
             .new_request(Method::POST, "/api/v2/write")
@@ -64,7 +79,6 @@ impl Client {
             .await
             .unwrap()
             .error_for_status();
-
 
         if let Err(err) = result {
             let status = err.status().unwrap().as_u16();

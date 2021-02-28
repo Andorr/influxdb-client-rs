@@ -1,5 +1,7 @@
 use std::fmt::Write;
 
+use crate::traits::PointSerialize;
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
@@ -63,8 +65,10 @@ impl Point {
         self.timestamp = Some(timestamp.into());
         self
     }
+}
 
-    pub fn serialize(self) -> String {
+impl PointSerialize for Point {
+    fn serialize(&self) -> String {
         let mut builder = String::new();
 
         // Write measurement
@@ -74,40 +78,44 @@ impl Point {
         if !self.tags.is_empty() {
             write!(&mut builder, ",").unwrap();
 
-            for tag in self.tags {
-                write!(&mut builder, "{}={}", tag.0.to_string(), tag.1.to_string()).unwrap();
-            }
-        }
-      
-        // Write fields
-        if !self.fields.is_empty() {
-            write!(&mut builder, " ").unwrap();
-
-            for field in self.fields {
+            for tag in &self.tags {
                 write!(
                     &mut builder,
                     "{}={}",
-                    field.0.to_string(),
-                    field.1.to_string()
+                    tag.0.to_string(),
+                    tag.1.clone().to_string()
                 )
                 .unwrap();
             }
         }
 
-        // Write timestamp
-        if let Some(t) = self.timestamp {
-            write!(&mut builder, " {}", t).unwrap();
+        // Write fields
+        if !self.fields.is_empty() {
+            write!(&mut builder, " ").unwrap();
+
+            for field in &self.fields {
+                write!(
+                    &mut builder,
+                    "{}={}",
+                    field.0.to_string(),
+                    field.1.clone().to_string()
+                )
+                .unwrap();
+            }
         }
 
         builder
     }
-}
 
-impl Iterator for Point {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        None
+    fn serialize_with_timestamp(&self, timestamp: Option<String>) -> String {
+        match timestamp {
+            Some(t) => format!("{} {}", self.serialize(), t),
+            None => format!(
+                "{} {}",
+                self.serialize(),
+                self.timestamp.unwrap_or_default()
+            ),
+        }
     }
 }
 
@@ -121,6 +129,7 @@ pub enum InfluxError {
 
 mod tests {
     use super::Point;
+    use crate::traits::PointSerialize;
 
     #[test]
     fn test_point_serialize() {
@@ -131,7 +140,7 @@ mod tests {
             .field("used_percent", 23.43234543)
             .timestamp(1556896326);
 
-        let actual = point.serialize();
+        let actual = point.serialize_with_timestamp(None);
 
         assert_eq!(actual, expected);
     }
