@@ -14,7 +14,7 @@ readme = "README.md"
 
 [dependencies]
 reqwest = { version = "0.11.1", default-features = false }
-influxdb_derive = { version = "0.1.2", path = "./influxdb_derive" }
+influxdb_derive = { version = "^0.1.2", path = "./influxdb_derive" }
 
 
 [dev-dependencies]
