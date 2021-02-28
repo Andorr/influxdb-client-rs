@@ -10,7 +10,7 @@ mod tests {
     use mockito::Matcher;
 
     use super::traits::PointSerialize;
-    use derives::PointSerialize;
+    use influxdb_derives::PointSerialize;
 
     #[test]
     fn test_derive_write() {
