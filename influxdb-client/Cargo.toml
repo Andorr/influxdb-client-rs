@@ -1,9 +1,9 @@
 [package]
 name = "influxdb-client"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Anders Hallem Iversen <andershallemiversen@hotmail.com>", "Sveinung Øverland"]
 edition = "2018"
-license-file = "../LICENSE"
+license = "MIT"
 description = "Rust client library for InfluxDB v2"
 documentation = "https://andorr.github.io/influxdb-client-rs/influxdb_client_rs/index.html"
 repository = "https://github.com/Andorr/influxdb-client-rs"
@@ -14,7 +14,7 @@ include = ["src/**/**", "Cargo.toml", "../README.md"]
 
 
 [dependencies]
-influxdb-derives = { path = "../influxdb-derive", version = "0.1.0" }
+influxdb-derives = { path = "../influxdb-derives", version = "0.1.0" }
 
 reqwest = { version = "0.11.1", default-features = false }
 

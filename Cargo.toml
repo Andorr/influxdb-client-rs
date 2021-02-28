@@ -1,5 +1,5 @@
 [workspace]
 members = [
     "influxdb-client",
-    "influxdb-derive",
+    "influxdb-derives",
 ]
