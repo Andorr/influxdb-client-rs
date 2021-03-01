@@ -6,7 +6,7 @@ pub mod macros;
 #[cfg(test)]
 mod tests {
 
-    use super::client::{Client, TimestampOptions};
+    use super::client::{Client, TimestampOptions, Precision};
     use super::models::{Point, Timestamp};
     use super::traits::PointSerialize;
     use super::timestamp;
@@ -95,6 +95,7 @@ mod tests {
             .match_query(Matcher::AllOf(vec![
                 Matcher::UrlEncoded("bucket".into(), "tradely".into()),
                 Matcher::UrlEncoded("orgID".into(), "168f31904923e853".into()),
+                Matcher::UrlEncoded("precision".into(), "ms".into()),
             ]))
             .match_body("test,ticker=GME price=420.69 1613925577")
             .expect(1)
@@ -102,7 +103,8 @@ mod tests {
 
         let client = Client::new(mockito::server_url(), String::from(api_key))
             .with_bucket("tradely")
-            .with_org_id("168f31904923e853");
+            .with_org_id("168f31904923e853")
+            .with_precision(Precision::MS);
 
         let point = Point::new("test")
             .tag("ticker", "GME")
