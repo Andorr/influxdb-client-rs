@@ -131,8 +131,8 @@ pub enum InfluxError {
 }
 
 mod tests {
-    use super::Point;
-    use crate::traits::PointSerialize;
+    
+    
 
     #[test]
     fn test_point_serialize() {
