@@ -2,15 +2,13 @@ use reqwest::{Client as HttpClient, Method, Url};
 
 use std::error::Error;
 
-use crate::{
-    models::{InfluxError, Value},
-    traits::PointSerialize,
-};
+use crate::{models::{InfluxError, Timestamp}, traits::PointSerialize};
 
 #[derive(Clone)]
-pub enum TimestampOption {
+pub enum TimestampOptions {
     None,
-    WithTimestamp(Option<Value>),
+    Use(Timestamp),
+    FromPoint,
 }
 
 /// Client for InfluxDB
@@ -58,7 +56,7 @@ impl Client {
     pub async fn insert_points<'a, I: IntoIterator<Item = &'a (impl PointSerialize + 'a)>>(
         self,
         points: I,
-        options: TimestampOption,
+        options: TimestampOptions,
     ) -> Result<(), InfluxError> {
         let body = points
             .into_iter()
@@ -66,8 +64,9 @@ impl Client {
                 format!(
                     "{}",
                     match options.clone() {
-                        TimestampOption::WithTimestamp(t) => p.serialize_with_timestamp(t),
-                        TimestampOption::None => p.serialize(),
+                        TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
+                        TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
+                        TimestampOptions::None => p.serialize(),
                     }
                 )
             })

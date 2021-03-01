@@ -1,19 +1,21 @@
 pub mod client;
 pub mod models;
 pub mod traits;
+pub mod macros;
 
 #[cfg(test)]
 mod tests {
 
-    use super::client::{Client, TimestampOption};
-    use super::models::{Point, Value};
+    use super::client::{Client, TimestampOptions};
+    use super::models::{Point, Timestamp};
+    use super::traits::PointSerialize;
+    use super::timestamp;
     use mockito::Matcher;
 
-    use super::traits::PointSerialize;
     use influxdb_derives::PointSerialize;
 
     #[test]
-    fn test_derive_write() {
+    fn test_derive_serialize() {
         #[derive(PointSerialize)]
         #[point(measurement = "test")]
         struct Test {
@@ -26,7 +28,7 @@ mod tests {
             #[point(field)]
             price2: String,
             #[point(timestamp)]
-            data: Value,
+            data: Timestamp,
         }
 
         let result = Test {
@@ -34,10 +36,10 @@ mod tests {
             ticker2: "!GME".to_string(),
             price: 0.32,
             price2: "Hello world".to_string(),
-            data: Value::from("321321321"),
+            data: Timestamp::from("321321321"),
         }
         .serialize();
-        println!("Wow, very serialized: {}", result);
+
         assert_eq!(
             "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\"".to_string(),
             result
@@ -45,7 +47,7 @@ mod tests {
     }
 
     #[test]
-    fn test_derive_write_with_timestamp() {
+    fn test_derive_serialize_with_timestamp() {
         #[derive(PointSerialize)]
         #[point(measurement = "test")]
         struct Test {
@@ -58,22 +60,28 @@ mod tests {
             #[point(field)]
             price2: String,
             #[point(timestamp)]
-            data: Value,
+            data: Timestamp,
         }
 
-        let result = Test {
+        let data = Test {
             ticker: "GME".to_string(),
             ticker2: "!GME".to_string(),
             price: 0.32,
             price2: "Hello world".to_string(),
-            data: Value::from("321321321"),
-        }
-        .serialize_with_timestamp(None);
-        println!("Wow, very serialized: {}", result);
+            data: Timestamp::from("321321321"),
+        };
+        let result = data.serialize_with_timestamp(None);
         assert_eq!(
             "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 321321321"
                 .to_string(),
             result
+        );
+
+        let result_2 = data.serialize_with_timestamp(Some(Timestamp::from(420)));
+        assert_eq!(
+            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 420"
+                .to_string(),
+            result_2
         );
     }
 
@@ -103,7 +111,7 @@ mod tests {
 
         let points: Vec<Point> = vec![point];
         let result = tokio_test::block_on(
-            client.insert_points(&points, TimestampOption::WithTimestamp(None)),
+            client.insert_points(&points, timestamp!(1613925577)),
         );
 
         assert!(result.is_ok());

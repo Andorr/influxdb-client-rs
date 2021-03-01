@@ -116,7 +116,7 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
             fn serialize(&self) -> String {
                 return format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string();
             }
-            fn serialize_with_timestamp(&self, timestamp: Option<Value>) -> String {
+            fn serialize_with_timestamp(&self, timestamp: Option<Timestamp>) -> String {
                 match timestamp {
                     Some(timestamp) => format!("{} {}", self.serialize(), timestamp.to_string()),
                     None => format!("{} {}", self.serialize(), self.#struct_timestamp.to_string())
