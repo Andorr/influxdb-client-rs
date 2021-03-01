@@ -71,7 +71,8 @@ mod tests {
         .serialize_with_timestamp(None);
         println!("Wow, very serialized: {}", result);
         assert_eq!(
-            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 321321321".to_string(),
+            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 321321321"
+                .to_string(),
             result
         );
     }
@@ -101,8 +102,9 @@ mod tests {
             .timestamp(1613925577);
 
         let points: Vec<Point> = vec![point];
-        let result =
-            tokio_test::block_on(client.insert_points(&points, TimestampOption::WithTimestamp(None)));
+        let result = tokio_test::block_on(
+            client.insert_points(&points, TimestampOption::WithTimestamp(None)),
+        );
 
         assert!(result.is_ok());
 

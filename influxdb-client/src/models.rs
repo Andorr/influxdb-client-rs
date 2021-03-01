@@ -25,20 +25,14 @@ impl From<f64> for Value {
     }
 }
 
-impl Value {
-    pub fn to_string(self) -> String {
+impl std::string::ToString for Value {
+    fn to_string(&self) -> String {
         match self {
             Value::Str(s) => s.to_string(),
             Value::Int(i) => i.to_string(),
             Value::Float(f) => f.to_string(),
             Value::Bool(b) => b.to_string(),
         }
-    }
-}
-
-impl Display for Value {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
     }
 }
 
