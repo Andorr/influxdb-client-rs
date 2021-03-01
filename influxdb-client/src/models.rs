@@ -1,4 +1,7 @@
-use std::fmt::Write;
+use std::{
+    borrow::Borrow,
+    fmt::{Display, Write},
+};
 
 use crate::traits::PointSerialize;
 
@@ -23,13 +26,19 @@ impl From<f64> for Value {
 }
 
 impl Value {
-    fn to_string(self) -> String {
+    pub fn to_string(self) -> String {
         match self {
             Value::Str(s) => s.to_string(),
             Value::Int(i) => i.to_string(),
             Value::Float(f) => f.to_string(),
             Value::Bool(b) => b.to_string(),
         }
+    }
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -107,9 +116,9 @@ impl PointSerialize for Point {
         builder
     }
 
-    fn serialize_with_timestamp(&self, timestamp: Option<String>) -> String {
+    fn serialize_with_timestamp(&self, timestamp: Option<Value>) -> String {
         match timestamp {
-            Some(t) => format!("{} {}", self.serialize(), t),
+            Some(timestamp) => format!("{} {}", self.serialize(), timestamp.to_string()),
             None => format!(
                 "{} {}",
                 self.serialize(),

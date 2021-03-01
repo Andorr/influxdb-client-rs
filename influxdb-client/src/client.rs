@@ -2,12 +2,15 @@ use reqwest::{Client as HttpClient, Method, Url};
 
 use std::error::Error;
 
-use crate::{models::InfluxError, traits::PointSerialize};
+use crate::{
+    models::{InfluxError, Value},
+    traits::PointSerialize,
+};
 
 #[derive(Clone)]
 pub enum InsertOptions {
     None,
-    WithTimestamp(Option<String>),
+    WithTimestamp(Option<Value>),
 }
 
 /// Client for InfluxDB

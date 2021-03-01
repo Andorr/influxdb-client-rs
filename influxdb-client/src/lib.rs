@@ -6,7 +6,7 @@ pub mod traits;
 mod tests {
 
     use super::client::{Client, InsertOptions};
-    use super::models::Point;
+    use super::models::{Point, Value};
     use mockito::Matcher;
 
     use super::traits::PointSerialize;
@@ -26,7 +26,7 @@ mod tests {
             #[point(field)]
             price2: String,
             #[point(timestamp)]
-            data: String,
+            data: Value,
         }
 
         let result = Test {
@@ -34,7 +34,7 @@ mod tests {
             ticker2: "!GME".to_string(),
             price: 0.32,
             price2: "Hello world".to_string(),
-            data: "321321321".to_string(),
+            data: Value::from("321321321"),
         }
         .serialize();
         println!("Wow, very serialized: {}", result);
