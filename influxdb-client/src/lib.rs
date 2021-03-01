@@ -70,7 +70,7 @@ mod tests {
 
         let points: Vec<Point> = vec![point];
         let result =
-            tokio_test::block_on(client.insert_points(points, InsertOptions::WithTimestamp(None)));
+            tokio_test::block_on(client.insert_points(&points, InsertOptions::WithTimestamp(None)));
 
         assert!(result.is_ok());
 
