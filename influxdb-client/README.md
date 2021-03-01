@@ -32,7 +32,8 @@ let points = vec![point];
 client.insert_points(points, TimestampOptions::None);
 
 // Timestamp 101 will be used
-client.insert_points(points, TimestampOptions::Use(101));
+client.insert_points(points, TimestampOptions::Use(Timestamp::from(101)));
+client.insert_points(points, timestamp!(101));
 
 // Timestamp 0 will be used
 client.insert_points(points, TimestampOptions::FromPoint);
