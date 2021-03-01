@@ -52,9 +52,9 @@ impl Client {
         self
     }
 
-    pub async fn insert_points(
+    pub async fn insert_points<'a, I: IntoIterator<Item = &'a (impl PointSerialize + 'a)>>(
         self,
-        points: impl IntoIterator<Item = impl PointSerialize>,
+        points: I,
         options: InsertOptions,
     ) -> Result<(), InfluxError> {
         let body = points
@@ -70,7 +70,6 @@ impl Client {
             })
             .collect::<Vec<String>>()
             .join("\n");
-
 
         let result = self
             .new_request(Method::POST, "/api/v2/write")
