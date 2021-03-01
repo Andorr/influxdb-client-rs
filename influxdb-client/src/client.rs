@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub enum InsertOptions {
+pub enum TimestampOption {
     None,
     WithTimestamp(Option<Value>),
 }
@@ -58,7 +58,7 @@ impl Client {
     pub async fn insert_points<'a, I: IntoIterator<Item = &'a (impl PointSerialize + 'a)>>(
         self,
         points: I,
-        options: InsertOptions,
+        options: TimestampOption,
     ) -> Result<(), InfluxError> {
         let body = points
             .into_iter()
@@ -66,8 +66,8 @@ impl Client {
                 format!(
                     "{}",
                     match options.clone() {
-                        InsertOptions::WithTimestamp(t) => p.serialize_with_timestamp(t),
-                        InsertOptions::None => p.serialize(),
+                        TimestampOption::WithTimestamp(t) => p.serialize_with_timestamp(t),
+                        TimestampOption::None => p.serialize(),
                     }
                 )
             })

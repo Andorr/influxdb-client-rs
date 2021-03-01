@@ -5,7 +5,7 @@ pub mod traits;
 #[cfg(test)]
 mod tests {
 
-    use super::client::{Client, InsertOptions};
+    use super::client::{Client, TimestampOption};
     use super::models::{Point, Value};
     use mockito::Matcher;
 
@@ -45,6 +45,38 @@ mod tests {
     }
 
     #[test]
+    fn test_derive_write_with_timestamp() {
+        #[derive(PointSerialize)]
+        #[point(measurement = "test")]
+        struct Test {
+            #[point(tag = "notTicker")]
+            ticker: String,
+            #[point(tag = "notTicker2")]
+            ticker2: String,
+            #[point(field = "notPrice")]
+            price: f32,
+            #[point(field)]
+            price2: String,
+            #[point(timestamp)]
+            data: Value,
+        }
+
+        let result = Test {
+            ticker: "GME".to_string(),
+            ticker2: "!GME".to_string(),
+            price: 0.32,
+            price2: "Hello world".to_string(),
+            data: Value::from("321321321"),
+        }
+        .serialize_with_timestamp(None);
+        println!("Wow, very serialized: {}", result);
+        assert_eq!(
+            "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 321321321".to_string(),
+            result
+        );
+    }
+
+    #[test]
     fn test_client_write() {
         let api_key = "TEST_API_KEY";
 
@@ -70,7 +102,7 @@ mod tests {
 
         let points: Vec<Point> = vec![point];
         let result =
-            tokio_test::block_on(client.insert_points(&points, InsertOptions::WithTimestamp(None)));
+            tokio_test::block_on(client.insert_points(&points, TimestampOption::WithTimestamp(None)));
 
         assert!(result.is_ok());
 
