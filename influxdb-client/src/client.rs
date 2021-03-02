@@ -2,34 +2,9 @@ use reqwest::{Client as HttpClient, Method, Url};
 
 use std::error::Error;
 
-use crate::{models::{InfluxError, Timestamp}, traits::PointSerialize};
+use crate::{models::{InfluxError, TimestampOptions, Precision}, traits::PointSerialize};
 
-#[derive(Clone)]
-pub enum TimestampOptions {
-    None,
-    Use(Timestamp),
-    FromPoint,
-}
 
-pub enum Precision {
-    NS,
-    US,
-    MS,
-    S,
-}
-
-impl Precision {
-
-    pub fn to_string(&self) -> &str {
-        match self {
-            Precision::NS => "ns",
-            Precision::US => "us",
-            Precision::MS => "ms",
-            Precision::S => "s",
-        }
-    }
-
-}
 
 /// Client for InfluxDB
 pub struct Client {

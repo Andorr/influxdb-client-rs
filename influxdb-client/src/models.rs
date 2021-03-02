@@ -28,6 +28,12 @@ impl From<i64> for Value {
     }
 }
 
+impl From<bool> for Value {
+    fn from(v: bool) -> Value {
+        Value::Bool(v)
+    }
+}
+
 impl std::string::ToString for Value {
     fn to_string(&self) -> String {
         match self {
@@ -172,51 +178,29 @@ pub enum InfluxError {
     Unknown(String),
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{Point, PointSerialize, Timestamp};
+#[derive(Clone)]
+pub enum TimestampOptions {
+    None,
+    Use(Timestamp),
+    FromPoint,
+}
 
-    #[test]
-    fn test_point_serialize_with_timestamp_from_point() {
-        let expected = "mem,host=host1 used_percent=23.43234543 1556896326";
+pub enum Precision {
+    NS,
+    US,
+    MS,
+    S,
+}
 
-        let point = Point::new("mem")
-            .tag("host", "host1")
-            .field("used_percent", 23.43234543)
-            .timestamp(1556896326);
+impl Precision {
 
-        let actual = point.serialize_with_timestamp(None);
-
-        assert_eq!(actual, expected);
+    pub fn to_string(&self) -> &str {
+        match self {
+            Precision::NS => "ns",
+            Precision::US => "us",
+            Precision::MS => "ms",
+            Precision::S => "s",
+        }
     }
 
-    #[test]
-    fn test_point_serialize_with_timestamp() {
-        let expected = "mem,host=host1,origin=origin1 used_percent=23.43234543 420";
-
-        let point = Point::new("mem")
-            .tag("host", "host1")
-            .tag("origin", "origin1")
-            .field("used_percent", 23.43234543)
-            .timestamp(1556896326);
-
-        let actual = point.serialize_with_timestamp(Some(Timestamp::from(420)));
-
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn test_point_serialize() {
-        let expected = "mem,host=host1 used_percent=23.43234543,name=\"Julius\"";
-
-        let point = Point::new("mem")
-            .tag("host", "host1")
-            .field("used_percent", 23.43234543)
-            .field("name", "Julius")
-            .timestamp(1556896326);
-
-        let actual = point.serialize();
-
-        assert_eq!(actual, expected);
-    }
 }
