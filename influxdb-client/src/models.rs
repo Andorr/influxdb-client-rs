@@ -1,7 +1,6 @@
-use std::{fmt::Write, ops::Add};
+use std::fmt::Write;
 
 use crate::traits::PointSerialize;
-
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -43,7 +42,7 @@ impl std::string::ToString for Value {
 #[derive(Debug, Clone)]
 pub enum Timestamp {
     Str(String),
-    Int(i64)
+    Int(i64),
 }
 
 impl From<&str> for Timestamp {
@@ -112,11 +111,13 @@ impl PointSerialize for Point {
         if !self.tags.is_empty() {
             write!(&mut builder, ",").unwrap();
 
-            let tags = self.tags.iter().map(|field| 
-                format!("{}={}", field.0, field.1.to_string())
-            )
-            .collect::<Vec<String>>()
-            .join(",").clone();
+            let tags = self
+                .tags
+                .iter()
+                .map(|field| format!("{}={}", field.0, field.1.to_string()))
+                .collect::<Vec<String>>()
+                .join(",")
+                .clone();
 
             builder.push_str(&tags);
         }
@@ -125,16 +126,22 @@ impl PointSerialize for Point {
         if !self.fields.is_empty() {
             write!(&mut builder, " ").unwrap();
 
-            let fields = self.fields.iter().map(|field| 
-                format!("{}={}", field.0, 
-                    match field.1.clone() {
-                        Value::Str(s) => format!("\"{}\"", s),
-                        _ => field.1.to_string()
-                    }
-                )
-            )
-            .collect::<Vec<String>>()
-            .join(",").clone();
+            let fields = self
+                .fields
+                .iter()
+                .map(|field| {
+                    format!(
+                        "{}={}",
+                        field.0,
+                        match field.1.clone() {
+                            Value::Str(s) => format!("\"{}\"", s),
+                            _ => field.1.to_string(),
+                        }
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join(",")
+                .clone();
 
             builder.push_str(&fields);
         }
@@ -148,7 +155,10 @@ impl PointSerialize for Point {
             None => format!(
                 "{} {}",
                 self.serialize(),
-                self.timestamp.clone().unwrap_or(Timestamp::from(0)).to_string()
+                self.timestamp
+                    .clone()
+                    .unwrap_or(Timestamp::from(0))
+                    .to_string()
             ),
         }
     }

@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{quote, quote_spanned};
 use syn;
 
 use proc_macro_roids::{namespace_parameter, DeriveInputStructExt, FieldExt};
@@ -31,13 +31,16 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
             if let syn::Lit::Str(lit_str) = lit {
                 lit_str.value()
             } else {
-                return (quote! { compile_error!("Measurement should be a string") }).into();
+                let span = lit.span();
+                return (quote_spanned! { span => compile_error!("Measurement should be a string"); }).into();
             }
         } else {
-            return (quote! { compile_error!("Top attribute is not measurement, which was expected") }).into();
+            let span = path.segments[0].ident.span();
+            return (quote_spanned! { span => compile_error!("Top attribute is not measurement, which was expected") }).into();
         }
     } else {
-        return (quote! { compile_error!("Did not find a suitable measurement tag should be in format '#[point(measurement = \"name\")]'"); }).into();
+        let span = ast.attrs[0].path.segments[0].ident.span();
+        return (quote_spanned! { span => compile_error!("Did not find a suitable measurement tag should be in format '#[point(measurement = \"name\")]'"); }).into();
     };
 
     let ast_fields = ast.fields();
@@ -53,7 +56,8 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
                     if let syn::Lit::Str(lit_str) = lit {
                         lit_str.value()
                     } else {
-                        return (quote! { compile_error!("Attribute must be a string type"); })
+                        let span = lit.span();
+                        return (quote_spanned! { span => compile_error!("Attribute must be a string type"); })
                             .into();
                     }
                 } else {
@@ -105,7 +109,7 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     let struct_timestamp = ast_fields
         .iter()
         .find(|field| field.contains_tag(&namespace, &timestamp_path))
-        .expect("Missing timestamp field!")
+        .expect("Missing timestamp field! Use #[point(timestamp)] over the timestamp field")
         .ident
         .as_ref()
         .unwrap();
@@ -125,129 +129,4 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
         }
     })
     .into()
-}
-
-/* // TODO: Proper error handling, with compiler feedback
-#[proc_macro_derive(PointSerialize, attributes(measurement, tag, field))]
-pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
-    // Ast is top level struct definition
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
-    let name = &ast.ident;
-    let mut measurement: Option<String> = None;
-    // Find top-level attributes, currently only measurement
-    ast.attrs.into_iter().for_each(|attr| {
-        match meta_matched_to_metanamevalue(attr.parse_meta().unwrap()) {
-            // Match '#[ident = lit]' attributes, more specifically the only one defined for this use, measurement
-            Some(syn::MetaNameValue { path, lit, .. })
-                if path.segments[0].ident == "measurement" =>
-            {
-                if let syn::Lit::Str(lit) = lit {
-                    measurement = Some(lit.value());
-                }
-            }
-            _ => { /* Unknown attribute, could be some other macros */ }
-        }
-    });
-
-    if measurement.is_none() {
-        eprintln!("Missing measurement attribute! Make sure it looks like '#[measurement = \"Some measurement\"]'");
-        panic!()
-    }
-
-    // Find struct field level attributes, currently only tag & field
-    match data_matched_to_datastruct(ast.data)
-        .and_then(|datastruct| fields_matched_to_fieldsnamed(datastruct.fields))
-    {
-        None => {
-            eprintln!("Couldn't extract named fields from struct, do they exist?");
-            panic!()
-        }
-        Some(syn::FieldsNamed { named, .. }) => {
-            named
-                .iter()
-                .filter(|field| field.attrs.len() > 0) // Check that the field actually has a attribute
-                .for_each(|field| {
-                    /* eprintln!("{:#?}", field);
-                    eprintln!(); */
-                    // Check if the named field has a attribute
-                    /* if (field) */
-                    let ident = &field.attrs[0].path.segments[0].ident.to_string() as &str;
-
-                    let field_name = field.ident.as_ref().map(|it| it.to_string());
-
-                    match ident {
-                        "tag" => {
-                            let mut tag_name: Option<String> = None;
-                            // Check if attribute has a value or field name should be used
-                            if field.attrs[0].tokens.is_empty() {
-                                tag_name = field_name;
-                            } else {
-                                match meta_matched_to_metanamevalue(
-                                    field.attrs[0].parse_meta().unwrap(),
-                                ) {
-                                    Some(syn::MetaNameValue { lit, .. }) => {
-                                        if let syn::Lit::Str(lit) = lit {
-                                            tag_name = Some(lit.value());
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                            eprintln!("Found tag value! {} = {:?}", ident, tag_name.expect("FAK"));
-                        }
-                        "field" => {
-                            let mut protocol_field_name: Option<String> = None;
-                            // Check if attribute has a value or field name should be used
-                            if field.attrs[0].tokens.is_empty() {
-                                protocol_field_name = field_name;
-                            } else {
-                                match meta_matched_to_metanamevalue(
-                                    field.attrs[0].parse_meta().unwrap(),
-                                ) {
-                                    Some(syn::MetaNameValue { lit, .. }) => {
-                                        if let syn::Lit::Str(lit) = lit {
-                                            protocol_field_name = Some(lit.value());
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                            eprintln!(
-                                "Found field value! {} = {:?}",
-                                ident,
-                                protocol_field_name.expect("FAK")
-                            );
-                        }
-                        _ => { /* Unknown field, could be some other macros */ }
-                    }
-                })
-        }
-    }
-
-    let gen = quote! {
-        impl PointSerialize for #name {
-            fn serialize() -> String {
-                return format!("{} ", #measurement).to_string();
-            }
-        }
-    };
-    gen.into()
-} */
-
-#[proc_macro_derive(HelloMacro)]
-pub fn hello_macro_derive(input: TokenStream) -> TokenStream {
-    // Construct a representation of Rust code as a syntax tree
-    // that we can manipulate
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
-
-    // Build the trait implementation
-    let name = ast.ident;
-    let gen = quote! {
-        impl HelloMacro for #name {
-            fn hello_macro() {
-                println!("Hello, Macro! My name is {}!", stringify!(#name));
-            }
-        }
-    };
-    gen.into()
 }

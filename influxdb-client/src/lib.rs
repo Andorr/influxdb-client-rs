@@ -1,15 +1,15 @@
 pub mod client;
+pub mod macros;
 pub mod models;
 pub mod traits;
-pub mod macros;
 
 #[cfg(test)]
 mod tests {
 
-    use super::client::{Client, TimestampOptions, Precision};
+    use super::client::{Client, Precision, TimestampOptions};
     use super::models::{Point, Timestamp};
-    use super::traits::PointSerialize;
     use super::timestamp;
+    use super::traits::PointSerialize;
     use mockito::Matcher;
 
     use influxdb_derives::PointSerialize;
@@ -112,9 +112,7 @@ mod tests {
             .timestamp(1613925577);
 
         let points: Vec<Point> = vec![point];
-        let result = tokio_test::block_on(
-            client.insert_points(&points, timestamp!(1613925577)),
-        );
+        let result = tokio_test::block_on(client.insert_points(&points, timestamp!(1613925577)));
 
         assert!(result.is_ok());
 
