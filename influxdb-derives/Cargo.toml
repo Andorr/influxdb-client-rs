@@ -1,6 +1,6 @@
 [package]
 name = "influxdb-derives"
-version = "0.1.0"
+version = "0.1.1"
 description = "InfluxDBv2 Rust client - struct serialization for line protocol"
 authors = ["Anders Hallem Iversen <andershallemiversen@hotmail.com>", "Sveinung Øverland"]
 license = "MIT"

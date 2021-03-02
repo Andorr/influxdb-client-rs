@@ -1,6 +1,6 @@
 [package]
 name = "influxdb-client"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Anders Hallem Iversen <andershallemiversen@hotmail.com>", "Sveinung Øverland"]
 edition = "2018"
 license = "MIT"
