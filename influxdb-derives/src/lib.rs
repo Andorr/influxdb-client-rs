@@ -145,7 +145,6 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
 
     // Output
     (if tag_tokens_length != 0 {
-        eprintln!("Implementing with tags");
         quote! {
             impl PointSerialize for #name {
                 fn serialize(&self) -> String {
@@ -155,7 +154,6 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
             }
         } 
     } else {
-        eprintln!("Implementing without tags");
         quote! {
             impl PointSerialize for #name {
                 fn serialize(&self) -> String {
