@@ -104,7 +104,6 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     }
     let tag_names_combined = string_vec_joiner!(tag_names, false);
 
-    eprintln!("Tag_names_combined: {}", tag_names_combined);
     let complete_text = if tag_names_combined != "" {
         format!("{{}},{} {}", tag_names_combined, field_names_combined)
     } else {
@@ -126,11 +125,6 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     let struct_timestamp = timestamp.ident.as_ref().unwrap();
 
     let tag_tokens_length = tag_tokens.len();
-
-
-    eprintln!("Complete text: {}", complete_text);
-    eprintln!("Tags: {}", (quote!{ #(self.#tag_tokens),* }).to_string());
-    eprintln!("Fields: {}", (quote!{ #(self.#field_tokens),* }).to_string());
 
     let serialize_with_timestamp = quote! {
         fn serialize_with_timestamp(&self, timestamp: Option<Timestamp>) -> String {
