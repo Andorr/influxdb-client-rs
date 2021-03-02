@@ -2,12 +2,33 @@ use reqwest::{Client as HttpClient, Method, Url};
 
 use std::error::Error;
 
-use crate::{models::InfluxError, traits::PointSerialize};
+use crate::{models::{InfluxError, Timestamp}, traits::PointSerialize};
 
 #[derive(Clone)]
-pub enum InsertOptions {
+pub enum TimestampOptions {
     None,
-    WithTimestamp(Option<String>),
+    Use(Timestamp),
+    FromPoint,
+}
+
+pub enum Precision {
+    NS,
+    US,
+    MS,
+    S,
+}
+
+impl Precision {
+
+    pub fn to_string(&self) -> &str {
+        match self {
+            Precision::NS => "ns",
+            Precision::US => "us",
+            Precision::MS => "ms",
+            Precision::S => "s",
+        }
+    }
+
 }
 
 /// Client for InfluxDB
@@ -18,6 +39,7 @@ pub struct Client {
     bucket: Option<String>,
     org: Option<String>,
     org_id: Option<String>,
+    precision: Precision,
 }
 
 impl Client {
@@ -34,6 +56,7 @@ impl Client {
             bucket: None,
             org: None,
             org_id: None,
+            precision: Precision::NS,
         }
     }
 
@@ -52,10 +75,19 @@ impl Client {
         self
     }
 
+    pub fn with_precision(mut self, precision: Precision) -> Self {
+        self.precision = precision;
+        self
+    }
+
+    pub fn precision(&self) -> &str {
+        self.precision.to_string()
+    }
+
     pub async fn insert_points<'a, I: IntoIterator<Item = &'a (impl PointSerialize + 'a)>>(
-        self,
+        &self,
         points: I,
-        options: InsertOptions,
+        options: TimestampOptions,
     ) -> Result<(), InfluxError> {
         let body = points
             .into_iter()
@@ -63,16 +95,20 @@ impl Client {
                 format!(
                     "{}",
                     match options.clone() {
-                        InsertOptions::WithTimestamp(t) => p.serialize_with_timestamp(t),
-                        InsertOptions::None => p.serialize(),
+                        TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
+                        TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
+                        TimestampOptions::None => p.serialize(),
                     }
                 )
             })
             .collect::<Vec<String>>()
             .join("\n");
 
+        let precision = self.precision.to_string();
+        let write_query_params = [("precision", precision)];
         let result = self
             .new_request(Method::POST, "/api/v2/write")
+            .query(&write_query_params)
             .body(body)
             .send()
             .await
@@ -87,17 +123,17 @@ impl Client {
         Ok(())
     }
 
-    fn new_request(self, method: Method, path: &str) -> reqwest::RequestBuilder {
+    fn new_request(&self, method: Method, path: &str) -> reqwest::RequestBuilder {
         // Build query params
         let mut query_params = Vec::<(&str, String)>::new();
-        if let Some(bucket) = self.bucket {
-            query_params.push(("bucket", bucket));
+        if let Some(bucket) = &self.bucket {
+            query_params.push(("bucket", bucket.clone()));
         }
 
-        if let Some(org) = self.org {
-            query_params.push(("org", org));
-        } else if let Some(org_id) = self.org_id {
-            query_params.push(("orgID", org_id));
+        if let Some(org) = &self.org {
+            query_params.push(("org", org.clone()));
+        } else if let Some(org_id) = &self.org_id {
+            query_params.push(("orgID", org_id.clone()));
         }
 
         // Build default request
