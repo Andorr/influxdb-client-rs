@@ -1,11 +1,9 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use quote::{quote, quote_spanned};
 use syn;
 use syn::spanned::Spanned;
-use syn::Type;
 
 use proc_macro_roids::{namespace_parameter, DeriveInputStructExt, FieldExt};
 
