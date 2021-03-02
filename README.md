@@ -10,7 +10,7 @@ An unofficial client-library for InfluxDB v2.
 
 ## ⬇️ Installation
 ```
-influxdb-client = "0.1.1"
+influxdb-client = "0.1.3"
 ```
 
 ## ❤️‍🔥 Usage
