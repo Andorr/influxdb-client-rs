@@ -3,13 +3,12 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{quote, quote_spanned};
 use syn;
+use syn::spanned::Spanned;
 
 use proc_macro_roids::{namespace_parameter, DeriveInputStructExt, FieldExt};
 
 #[proc_macro_derive(PointSerialize, attributes(point))]
 pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
-    // TODO: Finish serialize_with_timestamp
-    // TODO: Add a check for [field] value and make sure to add qouble quotes
     // Paths
     let namespace: syn::Path = syn::parse_quote!(point);
     let field_path: syn::Path = syn::parse_quote!(field);
@@ -19,8 +18,6 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     // Struct-level
     let ast = syn::parse_macro_input!(input as syn::DeriveInput);
     let name = &ast.ident;
-
-    // eprintln!("{:#?}", ast.attrs);
 
     let measurement: String = if let syn::NestedMeta::Meta(syn::Meta::NameValue(syn::MetaNameValue{
         path, lit, ..
@@ -86,10 +83,13 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     // Field-level
     let mut field_names: Vec<String> = Vec::new();
     let mut field_tokens: Vec<&syn::Ident> = Vec::new();
-    for field in ast_fields
+    let fields = ast_fields
         .iter()
-        .filter(|field| field.contains_tag(&namespace, &field_path))
-    {
+        .filter(|field| field.contains_tag(&namespace, &field_path));
+    if fields.clone().count() == 0 {
+        return (quote!{ compile_error!("Fields are not optional, there needs to be atleast one!"); }).into();
+    }
+    for field in fields {
         field_splitter!(field_names, field_tokens, field);
     }
     let field_names_combined = string_vec_joiner!(field_names, true);
@@ -104,27 +104,54 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     }
     let tag_names_combined = string_vec_joiner!(tag_names, false);
 
-    let complete_text = format!("{{}},{} {}", tag_names_combined, field_names_combined);
+    let complete_text = if tag_names_combined != "" {
+        format!("{{}},{} {}", tag_names_combined, field_names_combined)
+    } else {
+        format!("{{}} {}", field_names_combined)
+    };
 
-    let struct_timestamp = ast_fields
+    let timestamp = ast_fields
         .iter()
         .find(|field| field.contains_tag(&namespace, &timestamp_path))
-        .expect("Missing timestamp field! Use #[point(timestamp)] over the timestamp field")
-        .ident
-        .as_ref()
-        .unwrap();
+        .expect("Missing timestamp field! Use #[point(timestamp)] over the timestamp field");
+
+    let timestamp_field = &timestamp.ty;
+    if "Timestamp" != quote! { #timestamp_field }.to_string() {
+        let span = timestamp.ty.span();
+        return (quote_spanned! { span => compile_error!("Timestamp field must have 'Timestamp' type!"); })
+            .into();
+    }
+
+    let struct_timestamp = timestamp.ident.as_ref().unwrap();
+
+    let tag_tokens_length = tag_tokens.len();
+
+    let serialize_with_timestamp = quote! {
+        fn serialize_with_timestamp(&self, timestamp: Option<Timestamp>) -> String {
+            match timestamp {
+                Some(timestamp) => format!("{} {}", self.serialize(), timestamp.to_string()),
+                None => format!("{} {}", self.serialize(), self.#struct_timestamp.to_string())
+            }
+        }
+    };
 
     // Output
-    (quote! {
-        impl PointSerialize for #name {
-            fn serialize(&self) -> String {
-                return format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string();
-            }
-            fn serialize_with_timestamp(&self, timestamp: Option<Timestamp>) -> String {
-                match timestamp {
-                    Some(timestamp) => format!("{} {}", self.serialize(), timestamp.to_string()),
-                    None => format!("{} {}", self.serialize(), self.#struct_timestamp.to_string())
+    (if tag_tokens_length != 0 {
+        quote! {
+            impl PointSerialize for #name {
+                fn serialize(&self) -> String {
+                    format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string() 
                 }
+                #serialize_with_timestamp
+            }
+        } 
+    } else {
+        quote! {
+            impl PointSerialize for #name {
+                fn serialize(&self) -> String {
+                    format!(#complete_text, #measurement, #(self.#field_tokens),*).to_string()
+                }
+                #serialize_with_timestamp
             }
         }
     })
