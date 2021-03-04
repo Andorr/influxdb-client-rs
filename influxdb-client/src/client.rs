@@ -2,9 +2,10 @@ use reqwest::{Client as HttpClient, Method, Url};
 
 use std::error::Error;
 
-use crate::{models::{InfluxError, TimestampOptions, Precision}, traits::PointSerialize};
-
-
+use crate::{
+    models::{InfluxError, Precision, TimestampOptions},
+    traits::PointSerialize,
+};
 
 /// Client for InfluxDB
 pub struct Client {
@@ -15,6 +16,8 @@ pub struct Client {
     org: Option<String>,
     org_id: Option<String>,
     precision: Precision,
+
+    insert_to_stdout: bool,
 }
 
 impl Client {
@@ -32,7 +35,13 @@ impl Client {
             org: None,
             org_id: None,
             precision: Precision::NS,
+            insert_to_stdout: false,
         }
+    }
+
+    pub fn insert_to_stdout(mut self) -> Self {
+        self.insert_to_stdout = true;
+        self
     }
 
     pub fn with_bucket<T: Into<String>>(mut self, bucket: T) -> Self {
@@ -81,18 +90,23 @@ impl Client {
 
         let precision = self.precision.to_string();
         let write_query_params = [("precision", precision)];
-        let result = self
-            .new_request(Method::POST, "/api/v2/write")
-            .query(&write_query_params)
-            .body(body)
-            .send()
-            .await
-            .unwrap()
-            .error_for_status();
 
-        if let Err(err) = result {
-            let status = err.status().unwrap().as_u16();
-            return Err(Client::status_to_influxerror(status, Box::new(err)));
+        if self.insert_to_stdout {
+            println!("{}", body);
+        } else {
+            let result = self
+                .new_request(Method::POST, "/api/v2/write")
+                .query(&write_query_params)
+                .body(body)
+                .send()
+                .await
+                .unwrap()
+                .error_for_status();
+
+            if let Err(err) = result {
+                let status = err.status().unwrap().as_u16();
+                return Err(Client::status_to_influxerror(status, Box::new(err)));
+            }
         }
 
         Ok(())
