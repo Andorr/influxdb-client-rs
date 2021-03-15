@@ -2,7 +2,8 @@ mod client;
 mod macros;
 mod models;
 mod traits;
-
+mod query;
+mod transporter;
 
 // From library
 pub use crate::client::{Client};

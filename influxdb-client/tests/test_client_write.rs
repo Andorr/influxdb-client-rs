@@ -30,7 +30,7 @@ fn test_client_write() {
         .timestamp(1613925577);
 
     let points: Vec<Point> = vec![point];
-    let result = tokio_test::block_on(client.insert_points(&points, timestamp!(1613925577)));
+    let result = client.insert_points(&points, timestamp!(1613925577));
 
     assert!(result.is_ok());
 
