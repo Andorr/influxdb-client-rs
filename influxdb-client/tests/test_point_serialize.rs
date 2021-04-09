@@ -31,7 +31,7 @@ fn test_point_serialize_with_timestamp() {
 
 #[test]
 fn test_point_serialize() {
-    let expected = "mem,host=host1 used_percent=23.43234543,name=\"Julius\"";
+    let expected = "mem,host=host1 name=\"Julius\",used_percent=23.43234543";
 
     let point = Point::new("mem")
         .tag("host", "host1")
@@ -69,7 +69,7 @@ fn test_point_serialize_only_measurement() {
 
 #[test]
 fn test_point_serialize_all_types() {
-    let expected = "mem,bool_true=true,bool_false=false,tag_string=Hello world :D float=2.345,int=-9223372036854775806,field_string=\"Hello world :D\" -9223372036854775806";
+    let expected = "mem,bool_false=false,bool_true=true,tag_string=Hello world :D field_string=\"Hello world :D\",float=2.345,int=-9223372036854775806 -9223372036854775806";
 
     let point = Point::new("mem")
         .tag("bool_true", true)

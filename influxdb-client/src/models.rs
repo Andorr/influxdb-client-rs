@@ -1,4 +1,4 @@
-use std::fmt::Write;
+use std::{collections::BTreeMap, fmt::Write};
 
 use crate::traits::PointSerialize;
 
@@ -76,27 +76,27 @@ impl std::string::ToString for Timestamp {
 pub struct Point {
     pub measurement: String,
     pub timestamp: Option<Timestamp>,
-    pub tags: Vec<(String, Value)>,
-    pub fields: Vec<(String, Value)>,
+    pub tags: BTreeMap<String, Value>, // Using BTreeMaps to gain predictable .iter() order 
+    pub fields: BTreeMap<String, Value>,
 }
 
 impl Point {
     pub fn new<T: Into<String>>(measurement: T) -> Self {
         Point {
             measurement: measurement.into(),
-            tags: Vec::new(),
-            fields: Vec::new(),
+            tags: BTreeMap::new(),
+            fields: BTreeMap::new(),
             timestamp: None,
         }
     }
 
     pub fn tag<T: Into<String>, V: Into<Value>>(mut self, key: T, value: V) -> Self {
-        self.tags.push((key.into(), value.into()));
+        self.tags.insert(key.into(), value.into());
         self
     }
 
     pub fn field<T: Into<String>, V: Into<Value>>(mut self, key: T, value: V) -> Self {
-        self.fields.push((key.into(), value.into()));
+        self.fields.insert(key.into(), value.into());
         self
     }
 

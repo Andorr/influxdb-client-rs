@@ -4,8 +4,6 @@ use reqwest::{Method, blocking::{Client as HttpClient}};
 
 use crate::{InfluxError, client::{ClientOptions}};
 
-
-
 pub trait Transporter {
     fn insert(&self, options: ClientOptions, body: &Vec<String>, params: &Vec<(&str, &str)>) -> Result<(), InfluxError>;
 }
