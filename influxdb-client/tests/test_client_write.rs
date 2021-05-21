@@ -19,6 +19,7 @@ fn test_client_write() {
         .create();
 
     let client = Client::new(mockito::server_url(), String::from(api_key))
+        .unwrap()
         .with_bucket("tradely")
         .with_org_id("168f31904923e853")
         .with_precision(Precision::MS);

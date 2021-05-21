@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use crate::traits::PointSerialize;
 
 use reqwest::Response;
@@ -113,26 +111,26 @@ impl PointSerialize for Point {
         let mut builder = String::new();
 
         // Write measurement
-        write!(&mut builder, "{}", self.measurement).unwrap();
+        builder.push_str(&self.measurement);
 
         // Write tags
         if !self.tags.is_empty() {
-            write!(&mut builder, ",").unwrap();
+            builder.push(',');
 
+            // TODO: iterate can avoid string allocation and bring better performance
             let tags = self
                 .tags
                 .iter()
                 .map(|field| format!("{}={}", field.0, field.1.to_string()))
                 .collect::<Vec<String>>()
-                .join(",")
-                .clone();
+                .join(",");
 
             builder.push_str(&tags);
         }
 
         // Write fields
         if !self.fields.is_empty() {
-            write!(&mut builder, " ").unwrap();
+            builder.push(' ');
 
             let fields = self
                 .fields
@@ -148,8 +146,7 @@ impl PointSerialize for Point {
                     )
                 })
                 .collect::<Vec<String>>()
-                .join(",")
-                .clone();
+                .join(",");
 
             builder.push_str(&fields);
         }
@@ -165,7 +162,7 @@ impl PointSerialize for Point {
                 self.serialize(),
                 self.timestamp
                     .clone()
-                    .unwrap_or(Timestamp::from(0))
+                    .unwrap_or_else(|| Timestamp::from(0))
                     .to_string()
             ),
         }

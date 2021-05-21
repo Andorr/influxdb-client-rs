@@ -19,14 +19,18 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new<T>(host: T, token: T) -> Client
-    where
-        T: Into<String>,
-    {
-        let host_url = reqwest::Url::parse(&host.into()[..]).unwrap();
+    /// Create an influxdb client with given host url and token.
+    ///
+    /// # Example
+    /// ```
+    /// use influxdb_client::Client;
+    /// let client = Client::new("https://example.com:8086", "generated_token").unwrap();
+    /// ```
+    pub fn new(host: impl AsRef<str>, token: impl Into<String>) -> Result<Client, url::ParseError> {
+        let host = reqwest::Url::parse(host.as_ref())?;
 
-        Client {
-            host: host_url,
+        Ok(Client {
+            host,
             token: token.into(),
             client: HttpClient::default(),
             bucket: None,
@@ -34,9 +38,10 @@ impl Client {
             org_id: None,
             precision: Precision::NS,
             insert_to_stdout: false,
-        }
+        })
     }
 
+    /// Do not send request to influxdb but print to stdout. Useful for debugging
     pub fn insert_to_stdout(mut self) -> Self {
         self.insert_to_stdout = true;
         self
@@ -73,15 +78,10 @@ impl Client {
     ) -> Result<(), InfluxError> {
         let body = points
             .into_iter()
-            .map(|p| {
-                format!(
-                    "{}",
-                    match options.clone() {
-                        TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
-                        TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
-                        TimestampOptions::None => p.serialize(),
-                    }
-                )
+            .map(|p| match options.clone() {
+                TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
+                TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
+                TimestampOptions::None => p.serialize(),
             })
             .collect::<Vec<String>>()
             .join("\n");
