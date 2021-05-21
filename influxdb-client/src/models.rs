@@ -190,6 +190,7 @@ pub enum TimestampOptions {
     FromPoint,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum Precision {
     NS,
     US,

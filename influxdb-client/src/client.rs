@@ -6,6 +6,7 @@ use crate::{
 };
 
 /// Client for InfluxDB
+#[derive(Clone)]
 pub struct Client {
     host: Url,
     token: String,
