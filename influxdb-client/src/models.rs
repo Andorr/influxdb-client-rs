@@ -2,6 +2,8 @@ use std::fmt::Write;
 
 use crate::traits::PointSerialize;
 
+use reqwest::Response;
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
@@ -170,12 +172,18 @@ impl PointSerialize for Point {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum InfluxError {
-    InvalidSyntax(String),
-    InvalidCredentials(String),
-    Forbidden(String),
-    Unknown(String),
+    #[error("Network error: {0:?}")]
+    Network(#[from] reqwest::Error),
+    #[error("Invalid syntax: {0:?}")]
+    InvalidSyntax(Response),
+    #[error("Invalid credentials: {0:?}")]
+    InvalidCredentials(Response),
+    #[error("Forbidden: {0:?}")]
+    Forbidden(Response),
+    #[error("Unknown error: {0:?}")]
+    Unknown(Response),
 }
 
 #[derive(Clone)]
@@ -193,7 +201,6 @@ pub enum Precision {
 }
 
 impl Precision {
-
     pub fn to_string(&self) -> &str {
         match self {
             Precision::NS => "ns",
@@ -202,5 +209,4 @@ impl Precision {
             Precision::S => "s",
         }
     }
-
 }

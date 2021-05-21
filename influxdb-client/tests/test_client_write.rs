@@ -1,7 +1,6 @@
-use influxdb_client::{Client, Point, Precision, TimestampOptions, Timestamp, timestamp};
+use influxdb_client::{timestamp, Client, Point, Precision, Timestamp, TimestampOptions};
 
 use mockito::Matcher;
-
 
 #[test]
 fn test_client_write() {

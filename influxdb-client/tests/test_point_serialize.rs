@@ -48,8 +48,7 @@ fn test_point_serialize() {
 fn test_point_serialize_without_tag() {
     let expected = "mem name=\"Julius\"";
 
-    let point = Point::new("mem")
-        .field("name", "Julius");
+    let point = Point::new("mem").field("name", "Julius");
 
     let actual = point.serialize();
 

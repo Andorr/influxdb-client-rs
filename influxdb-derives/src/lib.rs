@@ -140,11 +140,11 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
         quote! {
             impl PointSerialize for #name {
                 fn serialize(&self) -> String {
-                    format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string() 
+                    format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string()
                 }
                 #serialize_with_timestamp
             }
-        } 
+        }
     } else {
         quote! {
             impl PointSerialize for #name {

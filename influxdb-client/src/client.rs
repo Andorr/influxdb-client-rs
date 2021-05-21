@@ -1,6 +1,4 @@
-use reqwest::{Client as HttpClient, Method, Url};
-
-use std::error::Error;
+use reqwest::{Client as HttpClient, Method, StatusCode, Url};
 
 use crate::{
     models::{InfluxError, Precision, TimestampOptions},
@@ -93,23 +91,25 @@ impl Client {
 
         if self.insert_to_stdout {
             println!("{}", body);
+            Ok(())
         } else {
-            let result = self
+            let response = self
                 .new_request(Method::POST, "/api/v2/write")
                 .query(&write_query_params)
                 .body(body)
                 .send()
-                .await
-                .unwrap()
-                .error_for_status();
+                .await?;
 
-            if let Err(err) = result {
-                let status = err.status().unwrap().as_u16();
-                return Err(Client::status_to_influxerror(status, Box::new(err)));
+            match response.status() {
+                StatusCode::BAD_REQUEST => Err(InfluxError::InvalidSyntax(response)),
+                StatusCode::UNAUTHORIZED => Err(InfluxError::InvalidCredentials(response)),
+                StatusCode::FORBIDDEN => Err(InfluxError::Forbidden(response)),
+                s if matches!(s.as_u16(), 400..=499 | 500..=500) => {
+                    Err(InfluxError::Unknown(response))
+                }
+                _ => Ok(()),
             }
         }
-
-        Ok(())
     }
 
     fn new_request(&self, method: Method, path: &str) -> reqwest::RequestBuilder {
@@ -134,14 +134,5 @@ impl Client {
             .header("Content-Type", "text/plain")
             .header("Authorization", format!("{} {}", "Token", self.token))
             .query(&query_params)
-    }
-
-    fn status_to_influxerror(status: u16, err: Box<dyn Error>) -> InfluxError {
-        match status {
-            400 => InfluxError::InvalidSyntax(err.to_string()),
-            401 => InfluxError::InvalidCredentials(err.to_string()),
-            403 => InfluxError::Forbidden(err.to_string()),
-            _ => InfluxError::Unknown(err.to_string()),
-        }
     }
 }
