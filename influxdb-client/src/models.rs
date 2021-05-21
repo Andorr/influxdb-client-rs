@@ -1,7 +1,5 @@
 use crate::traits::PointSerialize;
 
-use reqwest::Response;
-
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
@@ -173,14 +171,14 @@ impl PointSerialize for Point {
 pub enum InfluxError {
     #[error("Network error: {0:?}")]
     Network(#[from] reqwest::Error),
-    #[error("Invalid syntax: {0:?}")]
-    InvalidSyntax(Response),
-    #[error("Invalid credentials: {0:?}")]
-    InvalidCredentials(Response),
-    #[error("Forbidden: {0:?}")]
-    Forbidden(Response),
-    #[error("Unknown error: {0:?}")]
-    Unknown(Response),
+    #[error("Invalid syntax: {0}")]
+    InvalidSyntax(String),
+    #[error("Invalid credentials: {0}")]
+    InvalidCredentials(String),
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+    #[error("Unknown error: {0}")]
+    Unknown(String),
 }
 
 #[derive(Clone)]

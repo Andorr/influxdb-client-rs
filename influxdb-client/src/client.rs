@@ -101,12 +101,15 @@ impl Client {
                 .send()
                 .await?;
 
-            match response.status() {
-                StatusCode::BAD_REQUEST => Err(InfluxError::InvalidSyntax(response)),
-                StatusCode::UNAUTHORIZED => Err(InfluxError::InvalidCredentials(response)),
-                StatusCode::FORBIDDEN => Err(InfluxError::Forbidden(response)),
+            let status = response.status();
+            let content = response.text().await?;
+
+            match status {
+                StatusCode::BAD_REQUEST => Err(InfluxError::InvalidSyntax(content)),
+                StatusCode::UNAUTHORIZED => Err(InfluxError::InvalidCredentials(content)),
+                StatusCode::FORBIDDEN => Err(InfluxError::Forbidden(content)),
                 s if matches!(s.as_u16(), 400..=499 | 500..=500) => {
-                    Err(InfluxError::Unknown(response))
+                    Err(InfluxError::Unknown(content))
                 }
                 _ => Ok(()),
             }
