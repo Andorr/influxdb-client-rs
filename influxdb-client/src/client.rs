@@ -5,7 +5,10 @@ use crate::{
     traits::PointSerialize,
 };
 
-/// Client for InfluxDB
+/// Client for InfluxDB.
+///
+/// By default this client has a timeout of 3 seconds. If you want a different behavior,
+/// call [`Client::reqwest_client()`] to set a new client.
 #[derive(Clone)]
 pub struct Client {
     host: Url,
@@ -33,7 +36,10 @@ impl Client {
         Ok(Client {
             host,
             token: token.into(),
-            client: HttpClient::default(),
+            client: reqwest::ClientBuilder::new()
+                .timeout(std::time::Duration::from_secs(3))
+                .build()
+                .unwrap(),
             bucket: None,
             org: None,
             org_id: None,
@@ -65,6 +71,11 @@ impl Client {
 
     pub fn with_precision(mut self, precision: Precision) -> Self {
         self.precision = precision;
+        self
+    }
+
+    pub fn reqwest_client(mut self, client: reqwest::Client) -> Self {
+        self.client = client;
         self
     }
 
@@ -136,7 +147,7 @@ impl Client {
         self.client
             .request(method, url)
             .header("Content-Type", "text/plain")
-            .header("Authorization", format!("{} {}", "Token", self.token))
+            .header("Authorization", format!("Token {}", self.token))
             .query(&query_params)
     }
 }
