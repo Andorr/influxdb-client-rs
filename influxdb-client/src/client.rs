@@ -112,17 +112,28 @@ impl Client {
                 .send()
                 .await?;
 
-            let status = response.status();
-            let content = response.text().await?;
-
-            match status {
-                StatusCode::BAD_REQUEST => Err(InfluxError::InvalidSyntax(content)),
-                StatusCode::UNAUTHORIZED => Err(InfluxError::InvalidCredentials(content)),
-                StatusCode::FORBIDDEN => Err(InfluxError::Forbidden(content)),
+            match response.status() {
+                StatusCode::BAD_REQUEST => {
+                    let content = response.text().await?;
+                    Err(InfluxError::InvalidSyntax(content))
+                }
+                StatusCode::UNAUTHORIZED => {
+                    let content = response.text().await?;
+                    Err(InfluxError::InvalidCredentials(content))
+                }
+                StatusCode::FORBIDDEN => {
+                    let content = response.text().await?;
+                    Err(InfluxError::Forbidden(content))
+                }
                 s if matches!(s.as_u16(), 400..=499 | 500..=500) => {
+                    let content = response.text().await?;
                     Err(InfluxError::Unknown(content))
                 }
-                _ => Ok(()),
+                _ => {
+                    // this is the hot path, no need to wait for body here,
+                    // drop the response immediately for better performance.
+                    Ok(())
+                }
             }
         }
     }
