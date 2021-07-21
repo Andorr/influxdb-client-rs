@@ -1,4 +1,6 @@
+use crate::escape;
 use crate::traits::PointSerialize;
+use std::fmt::Write;
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -29,17 +31,6 @@ impl From<i64> for Value {
 impl From<bool> for Value {
     fn from(v: bool) -> Value {
         Value::Bool(v)
-    }
-}
-
-impl std::string::ToString for Value {
-    fn to_string(&self) -> String {
-        match self {
-            Value::Str(s) => s.to_string(),
-            Value::Int(i) => i.to_string(),
-            Value::Float(f) => f.to_string(),
-            Value::Bool(b) => b.to_string(),
-        }
     }
 }
 
@@ -74,7 +65,9 @@ impl std::string::ToString for Timestamp {
 pub struct Point {
     pub measurement: String,
     pub timestamp: Option<Timestamp>,
-    pub tags: Vec<(String, Value)>,
+    // tag values are always strings:
+    // <https://docs.influxdata.com/influxdb/v1.8/concepts/glossary/#tag-value>
+    pub tags: Vec<(String, String)>,
     pub fields: Vec<(String, Value)>,
 }
 
@@ -88,7 +81,7 @@ impl Point {
         }
     }
 
-    pub fn tag<T: Into<String>, V: Into<Value>>(mut self, key: T, value: V) -> Self {
+    pub fn tag<T: Into<String>, V: Into<String>>(mut self, key: T, value: V) -> Self {
         self.tags.push((key.into(), value.into()));
         self
     }
@@ -106,47 +99,57 @@ impl Point {
 
 impl PointSerialize for Point {
     fn serialize(&self) -> String {
+        // format guide: <https://archive.docs.influxdata.com/influxdb/v1.2/write_protocols/line_protocol_reference/>
+
         let mut builder = String::new();
 
         // Write measurement
-        builder.push_str(&self.measurement);
+        builder.push_str(&escape::escape_measurement(&self.measurement));
 
         // Write tags
         if !self.tags.is_empty() {
             builder.push(',');
-
-            // TODO: iterate can avoid string allocation and bring better performance
-            let tags = self
-                .tags
-                .iter()
-                .map(|field| format!("{}={}", field.0, field.1.to_string()))
-                .collect::<Vec<String>>()
-                .join(",");
-
-            builder.push_str(&tags);
+            let n = self.tags.len();
+            for (i, (tag_key, tag_value)) in self.tags.iter().enumerate() {
+                builder.push_str(&escape::escape_tag_and_field_keys(tag_key));
+                builder.push('=');
+                builder.push_str(&escape::escape_tag_and_field_keys(tag_value));
+                if i < n - 1 {
+                    builder.push(',');
+                }
+            }
         }
 
         // Write fields
         if !self.fields.is_empty() {
             builder.push(' ');
-
-            let fields = self
-                .fields
-                .iter()
-                .map(|field| {
-                    format!(
-                        "{}={}",
-                        field.0,
-                        match field.1.clone() {
-                            Value::Str(s) => format!("\"{}\"", s),
-                            _ => field.1.to_string(),
-                        }
-                    )
-                })
-                .collect::<Vec<String>>()
-                .join(",");
-
-            builder.push_str(&fields);
+            let n = self.fields.len();
+            for (i, (field_key, field_value)) in self.fields.iter().enumerate() {
+                builder.push_str(&escape::escape_tag_and_field_keys(field_key));
+                builder.push('=');
+                match field_value {
+                    Value::Str(s) => {
+                        write!(
+                            &mut builder,
+                            "\"{}\"",
+                            escape::escape_field_value_string(&s)
+                        )
+                        .unwrap();
+                    }
+                    Value::Int(i) => {
+                        write!(&mut builder, "{}", i).unwrap();
+                    }
+                    Value::Float(f) => {
+                        write!(&mut builder, "{}", f).unwrap();
+                    }
+                    Value::Bool(b) => {
+                        write!(&mut builder, "{}", b).unwrap();
+                    }
+                };
+                if i < n - 1 {
+                    builder.push(',');
+                }
+            }
         }
 
         builder

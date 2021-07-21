@@ -1,4 +1,5 @@
 mod client;
+mod escape;
 mod macros;
 mod models;
 mod traits;
