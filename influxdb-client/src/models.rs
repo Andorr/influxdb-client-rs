@@ -2,12 +2,66 @@ use std::fmt::Write;
 
 use crate::traits::PointSerialize;
 
+use std::convert::TryFrom;
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
     Int(i64),
     Float(f64),
     Bool(bool),
+}
+
+impl TryFrom<Value> for String {
+    type Error = &'static str;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        if let Value::Str(string) = value {
+            return Ok(string);
+        } else {
+            return Err("Could not convert from value to String");
+        }
+    }
+}
+impl TryFrom<Value> for i64 {
+    type Error = &'static str;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        if let Value::Int(int) = value {
+            return Ok(int);
+        } else {
+            return Err("Could not convert from value to i64");
+        }
+    }
+}
+impl TryFrom<Value> for f64 {
+    type Error = &'static str;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        if let Value::Float(float) = value {
+            return Ok(float);
+        } else {
+            return Err("Could not convert from value to f64");
+        }
+    }
+}
+impl TryFrom<Value> for bool {
+    type Error = &'static str;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        if let Value::Bool(bool) = value {
+            return Ok(bool);
+        } else {
+            return Err("Could not convert from value to bool");
+        }
+    }
+}
+
+impl TryFrom<Value> for Timestamp {
+    type Error = &'static str;
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        match value {
+            Value::Str(string) => Ok(string.as_str().into()),
+            Value::Int(int) => Ok(int.into()),
+            _ => Err("Could not create timestamp from field"),
+        }
+    }
 }
 
 impl From<&str> for Value {
@@ -168,6 +222,16 @@ impl PointSerialize for Point {
             ),
         }
     }
+
+    fn check_if_can_deserialize<T>(
+        fields: &std::collections::HashMap<String, T>,
+    ) -> Result<(), String> {
+        todo!()
+    }
+
+    fn deserialize_from_hashmap(fields: &std::collections::HashMap<String, Value>) -> Self {
+        todo!()
+    }
 }
 
 #[derive(Debug)]
@@ -193,7 +257,6 @@ pub enum Precision {
 }
 
 impl Precision {
-
     pub fn to_string(&self) -> &str {
         match self {
             Precision::NS => "ns",
@@ -202,5 +265,4 @@ impl Precision {
             Precision::S => "s",
         }
     }
-
 }
