@@ -81,6 +81,11 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     }
 
     // Field-level
+
+    let other_field_tokens: Vec<&syn::Ident> = ast_fields.iter()
+        .filter(|field| !field.contains_tag(&namespace, &field_path) && !field.contains_tag(&namespace, &tag_path) && !field.contains_tag(&namespace, &timestamp_path))
+        .map(|field| field.ident.as_ref().unwrap()).collect();
+
     let mut field_names: Vec<String> = Vec::new();
     let mut field_tokens: Vec<&syn::Ident> = Vec::new();
     let fields = ast_fields
@@ -89,6 +94,7 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     if fields.clone().count() == 0 {
         return (quote!{ compile_error!("Fields are not optional, there needs to be atleast one!"); }).into();
     }
+
     for field in fields {
         field_splitter!(field_names, field_tokens, field);
     }
@@ -135,6 +141,49 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
         }
     };
 
+    let check_if_can_deserialize = quote! {
+        fn check_if_can_deserialize<T>(fields: &std::collections::HashMap<String, T>) -> Result<(), String> {
+            for field in [#(#tag_names.to_string()),*, #(#field_names.to_string()),*].iter() {
+                if !fields.contains_key(field) {
+                    return Err(format!("Missing field: {} from query result", field));
+                }
+            }
+            Ok(())
+        }
+    };
+
+
+    let tag_tokens_quote = if tag_tokens_length > 0 {
+        quote! {
+            #(#tag_tokens: fields.get(#tag_names).unwrap().clone().try_into().unwrap()),*,
+        }
+    } else { quote!{} };
+
+    let field_tokens_quote = if field_tokens.len() > 0 {
+        quote! {
+            #(#field_tokens: fields.get(#field_names).unwrap().clone().try_into().unwrap()),*,
+        }
+    } else { quote!{} };
+
+    let other_field_tokens_quote = if other_field_tokens.len() > 0 {
+        quote! {
+            #(#other_field_tokens: <_>::default()),*,
+        }
+    } else { quote!{} };
+
+    let deserialize_from_hashmap = quote! {
+        fn deserialize_from_hashmap(fields: &std::collections::HashMap<String, influxdb_client::Value>) -> Self {
+            use influxdb_client::Value;
+            use std::convert::TryInto;
+            Self {
+                #struct_timestamp: fields.get("timestamp").unwrap().clone().try_into().unwrap(),
+                #tag_tokens_quote
+                #field_tokens_quote
+                #other_field_tokens_quote
+            }
+        }
+    };
+
     // Output
     (if tag_tokens_length != 0 {
         quote! {
@@ -143,6 +192,8 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
                     format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string() 
                 }
                 #serialize_with_timestamp
+                #check_if_can_deserialize
+                #deserialize_from_hashmap
             }
         } 
     } else {
@@ -152,6 +203,8 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
                     format!(#complete_text, #measurement, #(self.#field_tokens),*).to_string()
                 }
                 #serialize_with_timestamp
+                #check_if_can_deserialize
+                #deserialize_from_hashmap
             }
         }
     })
