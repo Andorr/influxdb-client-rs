@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["influxdb_client"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.54.0/alloc/string/trait.ToString.html\" title=\"trait alloc::string::ToString\">ToString</a> for <a class=\"enum\" href=\"influxdb_client/enum.Timestamp.html\" title=\"enum influxdb_client::Timestamp\">Timestamp</a>","synthetic":false,"types":["influxdb_client::models::Timestamp"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

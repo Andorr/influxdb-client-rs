@@ -1,0 +1,1 @@
+window.ALL_CRATES = ["influxdb_client","influxdb_derives"];

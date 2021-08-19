@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["InfluxError",""],["Precision",""],["Timestamp",""],["TimestampOptions",""],["Value",""]],"macro":[["timestamp",""]],"mod":[["derives",""]],"struct":[["Client","Client for InfluxDB."],["Point",""]],"trait":[["PointSerialize",""]]});

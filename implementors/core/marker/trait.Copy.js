@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["influxdb_client"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.54.0/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"enum\" href=\"influxdb_client/enum.Precision.html\" title=\"enum influxdb_client::Precision\">Precision</a>","synthetic":false,"types":["influxdb_client::models::Precision"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

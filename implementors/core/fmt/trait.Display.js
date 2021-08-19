@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["influxdb_client"] = [{"text":"impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.54.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"influxdb_client/enum.InfluxError.html\" title=\"enum influxdb_client::InfluxError\">InfluxError</a>","synthetic":false,"types":["influxdb_client::models::InfluxError"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
