@@ -2,7 +2,6 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::{quote, quote_spanned};
-use syn;
 use syn::spanned::Spanned;
 
 use proc_macro_roids::{namespace_parameter, DeriveInputStructExt, FieldExt};
@@ -104,10 +103,10 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
     }
     let tag_names_combined = string_vec_joiner!(tag_names, false);
 
-    let complete_text = if tag_names_combined != "" {
-        format!("{{}},{} {}", tag_names_combined, field_names_combined)
-    } else {
+    let complete_text = if tag_names_combined.is_empty() {
         format!("{{}} {}", field_names_combined)
+    } else {
+        format!("{{}},{} {}", tag_names_combined, field_names_combined)
     };
 
     let timestamp = ast_fields
@@ -140,11 +139,11 @@ pub fn point_serialize_derive(input: TokenStream) -> TokenStream {
         quote! {
             impl PointSerialize for #name {
                 fn serialize(&self) -> String {
-                    format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string() 
+                    format!(#complete_text, #measurement, #(self.#tag_tokens),*, #(self.#field_tokens),*).to_string()
                 }
                 #serialize_with_timestamp
             }
-        } 
+        }
     } else {
         quote! {
             impl PointSerialize for #name {

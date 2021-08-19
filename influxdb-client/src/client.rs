@@ -1,13 +1,15 @@
-use reqwest::{Client as HttpClient, Method, Url};
-
-use std::error::Error;
+use reqwest::{Client as HttpClient, Method, StatusCode, Url};
 
 use crate::{
     models::{InfluxError, Precision, TimestampOptions},
     traits::PointSerialize,
 };
 
-/// Client for InfluxDB
+/// Client for InfluxDB.
+///
+/// By default this client has a timeout of 3 seconds. If you want a different behavior,
+/// call [`Client::reqwest_client()`] to set a new client.
+#[derive(Clone)]
 pub struct Client {
     host: Url,
     token: String,
@@ -21,24 +23,32 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new<T>(host: T, token: T) -> Client
-    where
-        T: Into<String>,
-    {
-        let host_url = reqwest::Url::parse(&host.into()[..]).unwrap();
+    /// Create an influxdb client with given host url and token.
+    ///
+    /// # Example
+    /// ```
+    /// use influxdb_client::Client;
+    /// let client = Client::new("https://example.com:8086", "generated_token").unwrap();
+    /// ```
+    pub fn new(host: impl AsRef<str>, token: impl Into<String>) -> Result<Client, url::ParseError> {
+        let host = reqwest::Url::parse(host.as_ref())?;
 
-        Client {
-            host: host_url,
+        Ok(Client {
+            host,
             token: token.into(),
-            client: HttpClient::default(),
+            client: reqwest::ClientBuilder::new()
+                .timeout(std::time::Duration::from_secs(3))
+                .build()
+                .unwrap(),
             bucket: None,
             org: None,
             org_id: None,
             precision: Precision::NS,
             insert_to_stdout: false,
-        }
+        })
     }
 
+    /// Do not send request to influxdb but print to stdout. Useful for debugging
     pub fn insert_to_stdout(mut self) -> Self {
         self.insert_to_stdout = true;
         self
@@ -64,6 +74,11 @@ impl Client {
         self
     }
 
+    pub fn reqwest_client(mut self, client: reqwest::Client) -> Self {
+        self.client = client;
+        self
+    }
+
     pub fn precision(&self) -> &str {
         self.precision.to_string()
     }
@@ -75,15 +90,10 @@ impl Client {
     ) -> Result<(), InfluxError> {
         let body = points
             .into_iter()
-            .map(|p| {
-                format!(
-                    "{}",
-                    match options.clone() {
-                        TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
-                        TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
-                        TimestampOptions::None => p.serialize(),
-                    }
-                )
+            .map(|p| match options.clone() {
+                TimestampOptions::Use(t) => p.serialize_with_timestamp(Some(t)),
+                TimestampOptions::FromPoint => p.serialize_with_timestamp(None),
+                TimestampOptions::None => p.serialize(),
             })
             .collect::<Vec<String>>()
             .join("\n");
@@ -93,23 +103,39 @@ impl Client {
 
         if self.insert_to_stdout {
             println!("{}", body);
+            Ok(())
         } else {
-            let result = self
+            let response = self
                 .new_request(Method::POST, "/api/v2/write")
                 .query(&write_query_params)
                 .body(body)
                 .send()
-                .await
-                .unwrap()
-                .error_for_status();
+                .await?;
 
-            if let Err(err) = result {
-                let status = err.status().unwrap().as_u16();
-                return Err(Client::status_to_influxerror(status, Box::new(err)));
+            match response.status() {
+                StatusCode::BAD_REQUEST => {
+                    let content = response.text().await?;
+                    Err(InfluxError::InvalidSyntax(content))
+                }
+                StatusCode::UNAUTHORIZED => {
+                    let content = response.text().await?;
+                    Err(InfluxError::InvalidCredentials(content))
+                }
+                StatusCode::FORBIDDEN => {
+                    let content = response.text().await?;
+                    Err(InfluxError::Forbidden(content))
+                }
+                s if matches!(s.as_u16(), 400..=499 | 500..=500) => {
+                    let content = response.text().await?;
+                    Err(InfluxError::Unknown(content))
+                }
+                _ => {
+                    // this is the hot path, no need to wait for body here,
+                    // drop the response immediately for better performance.
+                    Ok(())
+                }
             }
         }
-
-        Ok(())
     }
 
     fn new_request(&self, method: Method, path: &str) -> reqwest::RequestBuilder {
@@ -132,16 +158,7 @@ impl Client {
         self.client
             .request(method, url)
             .header("Content-Type", "text/plain")
-            .header("Authorization", format!("{} {}", "Token", self.token))
+            .header("Authorization", format!("Token {}", self.token))
             .query(&query_params)
-    }
-
-    fn status_to_influxerror(status: u16, err: Box<dyn Error>) -> InfluxError {
-        match status {
-            400 => InfluxError::InvalidSyntax(err.to_string()),
-            401 => InfluxError::InvalidCredentials(err.to_string()),
-            403 => InfluxError::Forbidden(err.to_string()),
-            _ => InfluxError::Unknown(err.to_string()),
-        }
     }
 }

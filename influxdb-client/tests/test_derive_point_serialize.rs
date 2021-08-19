@@ -1,7 +1,5 @@
-
-use influxdb_client::{Timestamp, PointSerialize};
 use influxdb_client::derives::PointSerialize;
-
+use influxdb_client::{PointSerialize, Timestamp};
 
 #[test]
 fn test_derive_serialize() {
@@ -68,8 +66,7 @@ fn test_derive_serialize_with_timestamp() {
 
     let result_2 = data.serialize_with_timestamp(Some(Timestamp::from(420)));
     assert_eq!(
-        "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 420"
-            .to_string(),
+        "test,notTicker=GME,notTicker2=!GME notPrice=0.32,price2=\"Hello world\" 420".to_string(),
         result_2
     );
 }

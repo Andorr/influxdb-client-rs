@@ -1,7 +1,6 @@
-use influxdb_client::{Client, Point, Precision, TimestampOptions, Timestamp, timestamp};
+use influxdb_client::{timestamp, Client, Point, Precision, Timestamp, TimestampOptions};
 
 use mockito::Matcher;
-
 
 #[test]
 fn test_client_write() {
@@ -20,6 +19,7 @@ fn test_client_write() {
         .create();
 
     let client = Client::new(mockito::server_url(), String::from(api_key))
+        .unwrap()
         .with_bucket("tradely")
         .with_org_id("168f31904923e853")
         .with_precision(Precision::MS);

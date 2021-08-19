@@ -48,8 +48,7 @@ fn test_point_serialize() {
 fn test_point_serialize_without_tag() {
     let expected = "mem name=\"Julius\"";
 
-    let point = Point::new("mem")
-        .field("name", "Julius");
+    let point = Point::new("mem").field("name", "Julius");
 
     let actual = point.serialize();
 
@@ -69,15 +68,14 @@ fn test_point_serialize_only_measurement() {
 
 #[test]
 fn test_point_serialize_all_types() {
-    let expected = "mem,bool_true=true,bool_false=false,tag_string=Hello world :D float=2.345,int=-9223372036854775806,field_string=\"Hello world :D\" -9223372036854775806";
+    let expected = r#"mem,tag_string=Hello\ world\ :D float=2.345,bool=true,int=-9223372036854775806,field_string="Hello world :D\"" -9223372036854775806"#;
 
     let point = Point::new("mem")
-        .tag("bool_true", true)
-        .tag("bool_false", false)
         .tag("tag_string", "Hello world :D")
         .field("float", 2.345)
+        .field("bool", true)
         .field("int", -9223372036854775806)
-        .field("field_string", "Hello world :D")
+        .field("field_string", "Hello world :D\"")
         .timestamp(-9223372036854775806);
 
     let actual = point.serialize_with_timestamp(None);
