@@ -137,7 +137,7 @@ impl PointSerialize for Point {
                         .unwrap();
                     }
                     Value::Int(i) => {
-                        write!(&mut builder, "{}", i).unwrap();
+                        write!(&mut builder, "{}i", i).unwrap();
                     }
                     Value::Float(f) => {
                         write!(&mut builder, "{}", f).unwrap();
