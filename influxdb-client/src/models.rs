@@ -1,11 +1,13 @@
+use std::fmt::Write;
+
 use crate::escape;
 use crate::traits::PointSerialize;
-use std::fmt::Write;
 
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
     Int(i64),
+    UInt(u64),
     Float(f64),
     Bool(bool),
 }
@@ -19,6 +21,12 @@ impl From<&str> for Value {
 impl From<f64> for Value {
     fn from(v: f64) -> Value {
         Value::Float(v)
+    }
+}
+
+impl From<u64> for Value {
+    fn from(v: u64) -> Value {
+        Value::UInt(v)
     }
 }
 
@@ -134,10 +142,13 @@ impl PointSerialize for Point {
                             "\"{}\"",
                             escape::escape_field_value_string(&s)
                         )
-                        .unwrap();
+                            .unwrap();
                     }
                     Value::Int(i) => {
                         write!(&mut builder, "{}i", i).unwrap();
+                    }
+                    Value::UInt(i) => {
+                        write!(&mut builder, "{}u", i).unwrap();
                     }
                     Value::Float(f) => {
                         write!(&mut builder, "{}", f).unwrap();
