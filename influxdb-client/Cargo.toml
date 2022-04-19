@@ -10,13 +10,11 @@ repository = "https://github.com/Andorr/influxdb-client-rs"
 readme = "../README.md"
 include = ["src/**/**", "Cargo.toml", "../README.md"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
 [dependencies]
 influxdb-derives = { path = "../influxdb-derives", version = "0.1.0" }
 
 reqwest = { version = "0.11.1", default-features = false }
+flate2 = "1.0.23"
 url = "2.2.2"
 
 thiserror = "1.0.24"

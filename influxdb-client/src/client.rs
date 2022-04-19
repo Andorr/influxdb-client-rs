@@ -1,3 +1,7 @@
+use std::io::Write;
+
+use flate2::write::GzEncoder;
+use flate2::Compression;
 use reqwest::{Client as HttpClient, Method, StatusCode, Url};
 
 use crate::{
@@ -18,6 +22,7 @@ pub struct Client {
     org: Option<String>,
     org_id: Option<String>,
     precision: Precision,
+    compression_level: u32,
 
     insert_to_stdout: bool,
 }
@@ -44,6 +49,7 @@ impl Client {
             org: None,
             org_id: None,
             precision: Precision::NS,
+            compression_level: 0,
             insert_to_stdout: false,
         })
     }
@@ -79,6 +85,11 @@ impl Client {
         self
     }
 
+    pub fn with_compression<T: Into<u32>>(mut self, level: T) -> Self {
+        self.compression_level = level.into();
+        self
+    }
+
     pub fn precision(&self) -> &str {
         self.precision.to_string()
     }
@@ -105,13 +116,27 @@ impl Client {
             println!("{}", body);
             Ok(())
         } else {
-            let response = self
+            let mut request = self
                 .new_request(Method::POST, "/api/v2/write")
-                .query(&write_query_params)
-                .body(body)
-                .send()
-                .await?;
+                .query(&write_query_params);
 
+            if self.compression_level == 0 {
+                request = request.body(body);
+            } else {
+                let compression = Compression::new(self.compression_level);
+                let mut encoder = GzEncoder::new(vec![], compression);
+
+                encoder
+                    .write_all(body.as_bytes())
+                    .map_err(|err| InfluxError::Unknown(err.to_string()))?;
+                let body = encoder
+                    .finish()
+                    .map_err(|err| InfluxError::Unknown(err.to_string()))?;
+
+                request = request.body(body).header("Content-Encoding", "gzip");
+            }
+
+            let response = request.send().await?;
             match response.status() {
                 StatusCode::BAD_REQUEST => {
                     let content = response.text().await?;
